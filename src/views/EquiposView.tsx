@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Ticket } from '../types';
-import { MonitorSmartphone, Calendar, User, FileText, Wrench, Trash2, Printer } from 'lucide-react';
+import { MonitorSmartphone, Calendar, User, FileText, Wrench, Trash2, Printer, MessageCircle } from 'lucide-react';
 
 interface Props {
   tickets: Ticket[];
@@ -17,6 +17,19 @@ export function EquiposView({ tickets, onDeleteTicket }: Props) {
       window.print();
       setPrintingId(null);
     }, 100);
+  };
+
+  const handleWhatsApp = (t: Ticket) => {
+    const baseUrl = window.location.origin;
+    const trackingUrl = `${baseUrl}?view=tracking&ticket=${t.id}`;
+    const text = `Hola *${t.cliente.nombre}*, gracias por confiar en nosotros! 🛠️\n\nTu equipo *${t.equipo.modelo}* con orden *${t.id}* se encuentra actualmente: *${t.estado}*.\n\nPuedes consultar el detalle y seguimiento en tiempo real aquí:\n🔗 ${trackingUrl}\n\nCualquier duda estamos a tu disposición.`;
+    
+    // Limpiar número (remover espacios, guiones, y asegurarse que empiece con código de país)
+    let phone = t.cliente.telefono.replace(/\D/g, '');
+    // Si el número no tiene código de país (ejemplo: 10 dígitos), asumimos que el usuario lo guardó así.
+    // Dependiendo del país, podrías añadir un código por defecto, pero lo mejor es usar el número tal cual.
+    
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const filteredTickets = filterStatus === 'Todos' 
@@ -76,7 +89,14 @@ export function EquiposView({ tickets, onDeleteTicket }: Props) {
                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                   {t.estado}
                 </span>
-                <div className="flex gap-1">
+                <div className="flex gap-1 mt-2">
+                  <button 
+                    onClick={() => handleWhatsApp(t)} 
+                    className="text-gray-400 hover:text-green-600 hover:bg-green-50 p-1.5 rounded-md transition-colors"
+                    title="Notificar por WhatsApp"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                  </button>
                   <button 
                     onClick={() => handlePrint(t.id)} 
                     className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded-md transition-colors"
