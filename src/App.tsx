@@ -13,12 +13,6 @@ import { TrackingView } from './views/TrackingView';
 import { LandingView } from './views/LandingView';
 import { supabase } from './lib/supabase';
 
-// Datos Iniciales (Limpios para producción/pruebas reales)
-const initialTickets: Ticket[] = [];
-const initialTecnicos: Tecnico[] = [];
-const initialClientes: Cliente[] = [];
-const initialInventario: Repuesto[] = [];
-
 function App() {
   const urlParams = new URLSearchParams(window.location.search);
   
@@ -54,31 +48,10 @@ function App() {
   const [tallerNameInput, setTallerNameInput] = useState('');
   const [authError, setAuthError] = useState('');
 
-  const [tickets, setTickets] = useState<Ticket[]>(() => {
-    const saved = localStorage.getItem('diagtech_tickets');
-    return saved ? JSON.parse(saved) : initialTickets;
-  });
-  
-  const [tecnicos, setTecnicos] = useState<Tecnico[]>(() => {
-    const saved = localStorage.getItem('diagtech_tecnicos');
-    return saved ? JSON.parse(saved) : initialTecnicos;
-  });
-  
-  const [clientes, setClientes] = useState<Cliente[]>(() => {
-    const saved = localStorage.getItem('diagtech_clientes');
-    return saved ? JSON.parse(saved) : initialClientes;
-  });
-  
-  const [inventario, setInventario] = useState<Repuesto[]>(() => {
-    const saved = localStorage.getItem('diagtech_inventario');
-    return saved ? JSON.parse(saved) : initialInventario;
-  });
-
-  // Guardar en localStorage cada vez que cambien los datos
-  useEffect(() => { localStorage.setItem('diagtech_tickets', JSON.stringify(tickets)); }, [tickets]);
-  useEffect(() => { localStorage.setItem('diagtech_tecnicos', JSON.stringify(tecnicos)); }, [tecnicos]);
-  useEffect(() => { localStorage.setItem('diagtech_clientes', JSON.stringify(clientes)); }, [clientes]);
-  useEffect(() => { localStorage.setItem('diagtech_inventario', JSON.stringify(inventario)); }, [inventario]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [tecnicos, setTecnicos] = useState<Tecnico[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [inventario, setInventario] = useState<Repuesto[]>([]);
 
   // Sincronizar el botón de "Atrás/Adelante" del navegador
   useEffect(() => {
