@@ -185,13 +185,17 @@ function App() {
 
   // Si es la página de marketing inicial
   if (view === 'landing') {
-    return <LandingView onNavigate={handleNavClick} />;
+    return (
+      <div key="landing" className="animate-fade-in">
+        <LandingView onNavigate={handleNavClick} />
+      </div>
+    );
   }
 
   // Vista rápida para cuando quieran registrarse
   if (view === 'register') {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div key="register" className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 animate-fade-in">
         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
           <div className="mx-auto w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mb-4">
             <Cpu className="w-8 h-8 text-brand-600" />
@@ -214,7 +218,7 @@ function App() {
   // Render especial sin barra lateral para simular la web del cliente
   if (view === 'tracking') {
     return (
-      <div className="relative h-screen w-full">
+      <div key="tracking" className="relative h-screen w-full animate-fade-in">
         <button 
           onClick={() => handleNavClick('landing')} 
           className="absolute top-4 left-4 z-50 bg-white/80 hover:bg-white text-gray-700 px-4 py-2 rounded-lg font-medium shadow-sm flex items-center backdrop-blur border border-gray-200 text-sm"
@@ -229,7 +233,7 @@ function App() {
   // Protección del Dashboard: Si la vista es login, mostramos la pantalla de bloqueo
   if (view === 'login') {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div key="login" className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 animate-fade-in">
         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
           <div className="mx-auto w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mb-4">
             <Lock className="w-8 h-8 text-brand-600" />
@@ -331,12 +335,23 @@ function App() {
           </div>
         </header>
 
-        {/* Content routing */}
-        {view === 'dashboard' && <DashboardView tickets={tickets} inventario={inventario} onUpdateStatus={handleUpdateStatus} onClientClick={handleGoToCliente} />}
-        {view === 'equipos' && <EquiposView tickets={tickets} />}
-        {view === 'clientes' && <ClientesView clientes={clientes} tickets={tickets} onAddCliente={(c) => setClientes([...clientes, c])} searchTerm={clienteSearchTerm} setSearchTerm={setClienteSearchTerm} highlightedCliente={highlightedCliente} />}
-        {view === 'tecnicos' && <TecnicosView tecnicos={tecnicos} onAddTecnico={(t) => setTecnicos([...tecnicos, t])} />}
-        {view === 'inventario' && <InventarioView inventario={inventario} onAddRepuesto={(r) => setInventario([...inventario, r])} onAddRepuestosBulk={(nuevos) => setInventario([...inventario, ...nuevos])} />}
+        {/* Dynamic Content View */}
+        <div key={view} className="flex-1 overflow-y-auto animate-fade-in flex flex-col">
+          {view === 'dashboard' && <DashboardView tickets={tickets} inventario={inventario} onUpdateStatus={handleUpdateStatus} onClientClick={handleGoToCliente} />}
+          {view === 'equipos' && <EquiposView tickets={tickets} />}
+          {view === 'clientes' && (
+            <ClientesView 
+              clientes={clientes} 
+              tickets={tickets} 
+              onAddCliente={c => setClientes([...clientes, c])} 
+              searchTerm={clienteSearchTerm}
+              setSearchTerm={setClienteSearchTerm}
+              highlightedCliente={highlightedCliente}
+            />
+          )}
+          {view === 'tecnicos' && <TecnicosView tecnicos={tecnicos} onAddTecnico={t => setTecnicos([...tecnicos, t])} />}
+          {view === 'inventario' && <InventarioView inventario={inventario} onAddRepuesto={(r) => setInventario([...inventario, r])} onAddRepuestosBulk={(nuevos) => setInventario([...inventario, ...nuevos])} />}
+        </div>
       </main>
 
       <NewTicketModal isOpen={isNewModalOpen} onClose={() => setIsNewModalOpen(false)} onSave={handleAddTicket} />
