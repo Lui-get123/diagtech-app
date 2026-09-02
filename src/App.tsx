@@ -72,6 +72,28 @@ function App() {
   useEffect(() => { localStorage.setItem('diagtech_tecnicos', JSON.stringify(tecnicos)); }, [tecnicos]);
   useEffect(() => { localStorage.setItem('diagtech_clientes', JSON.stringify(clientes)); }, [clientes]);
   useEffect(() => { localStorage.setItem('diagtech_inventario', JSON.stringify(inventario)); }, [inventario]);
+
+  // Sincronizar el botón de "Atrás/Adelante" del navegador
+  useEffect(() => {
+    const handlePopState = () => {
+      const currentParams = new URLSearchParams(window.location.search);
+      const v = currentParams.get('view');
+      
+      let nextView = 'landing';
+      if (!v || v === 'landing') nextView = 'landing';
+      else if (v === 'tracking') nextView = 'tracking';
+      else if (v === 'register') nextView = 'register';
+      else if (v === 'login' || v === 'diagtech-admin') nextView = isAuthenticated ? 'dashboard' : 'login';
+      else if (['dashboard', 'equipos', 'clientes', 'tecnicos', 'inventario'].includes(v)) {
+        nextView = isAuthenticated ? v : 'login';
+      }
+      
+      setView(nextView as any);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isAuthenticated]);
   
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
