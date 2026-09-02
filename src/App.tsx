@@ -107,17 +107,27 @@ function App() {
   const [highlightedCliente, setHighlightedCliente] = useState<string | null>(null);
   const [clienteSearchTerm, setClienteSearchTerm] = useState('');
   
+  // Utilidad para encriptar la contraseña (SHA-256) antes de enviarla a la base de datos
+  const hashPassword = async (password: string) => {
+    const msgBuffer = new TextEncoder().encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
     setAuthLoading(true);
     
-    // Consulta simple a la base de datos
+    const hashedPassword = await hashPassword(passwordInput);
+
+    // Consulta simple a la base de datos con contraseña encriptada
     const { data, error } = await supabase
       .from('talleres')
       .select('*')
       .eq('email', emailInput)
-      .eq('password', passwordInput) // En un entorno real esto iría encriptado
+      .eq('password', hashedPassword)
       .single();
 
     setAuthLoading(false);
@@ -137,10 +147,12 @@ function App() {
     setAuthError('');
     setAuthLoading(true);
 
+    const hashedPassword = await hashPassword(passwordInput);
+
     const { data, error: dbError } = await supabase.from('talleres').insert({
       nombre: tallerNameInput,
       email: emailInput,
-      password: passwordInput, // Guardado directo como lo solicitaste
+      password: hashedPassword,
     }).select().single();
 
     setAuthLoading(false);
