@@ -99,7 +99,13 @@ export function InventarioView({ inventario, onAddRepuesto, onAddRepuestosBulk, 
     setRawCsvData([]);
   };
 
-  const filtered = inventario.filter(r => r.nombre.toLowerCase().includes(searchTerm.toLowerCase()));
+  const [showLowStockOnly, setShowLowStockOnly] = useState(false);
+
+  const filtered = inventario.filter(r => {
+    const matchesSearch = r.nombre.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStock = showLowStockOnly ? r.stock <= 2 : true;
+    return matchesSearch && matchesStock;
+  });
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">
@@ -185,9 +191,18 @@ export function InventarioView({ inventario, onAddRepuesto, onAddRepuestosBulk, 
       )}
 
       <div className="bg-white shadow-sm ring-1 ring-gray-200 sm:rounded-xl overflow-hidden">
-        <div className="px-4 py-4 border-b border-gray-200 bg-gray-50/50 flex items-center">
-          <PackageSearch className="w-5 h-5 text-gray-400 mr-2" />
-          <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Buscar repuestos..." className="border-0 bg-transparent focus:ring-0 text-sm w-full outline-none" />
+        <div className="px-4 py-4 border-b border-gray-200 bg-gray-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center flex-1 w-full">
+            <PackageSearch className="w-5 h-5 text-gray-400 mr-2" />
+            <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Buscar repuestos..." className="border-0 bg-transparent focus:ring-0 text-sm w-full outline-none" />
+          </div>
+          <button
+            onClick={() => setShowLowStockOnly(!showLowStockOnly)}
+            className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center transition-colors ${showLowStockOnly ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          >
+            <AlertTriangle className={`w-4 h-4 mr-1.5 ${showLowStockOnly ? 'text-red-600' : 'text-gray-500'}`} />
+            Stock Crítico
+          </button>
         </div>
         
         <table className="min-w-full divide-y divide-gray-200">

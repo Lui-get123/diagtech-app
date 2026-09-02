@@ -9,6 +9,7 @@ interface Props {
 
 export function EquiposView({ tickets, onDeleteTicket }: Props) {
   const [printingId, setPrintingId] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string>('Todos');
 
   const handlePrint = (id: string) => {
     setPrintingId(id);
@@ -18,15 +19,37 @@ export function EquiposView({ tickets, onDeleteTicket }: Props) {
     }, 100);
   };
 
+  const filteredTickets = filterStatus === 'Todos' 
+    ? tickets 
+    : tickets.filter(t => t.estado === filterStatus);
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">Catálogo de Equipos en el Taller</h2>
-        <p className="text-sm text-gray-500 mt-1">Vista detallada de todos los equipos ingresados.</p>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">Catálogo de Equipos en el Taller</h2>
+          <p className="text-sm text-gray-500 mt-1">Vista detallada de todos los equipos ingresados.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-gray-700">Filtrar por estado:</label>
+          <select 
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="border-gray-300 rounded-md text-sm py-1.5 pl-3 pr-8 focus:ring-brand-500 focus:border-brand-500 border"
+          >
+            <option value="Todos">Todos los equipos</option>
+            <option value="Ingresado">Ingresado</option>
+            <option value="Diagnosticando">Diagnosticando</option>
+            <option value="En Reparación">En Reparación</option>
+            <option value="En Espera (Repuesto)">En Espera (Repuesto)</option>
+            <option value="Listo p/ Entrega">Listo p/ Entrega</option>
+            <option value="Entregado">Entregado (Completado)</option>
+          </select>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {tickets.map(t => (
+        {filteredTickets.map(t => (
           <div key={t.id} className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col ${printingId === t.id ? 'print-only-this' : ''} ${printingId && printingId !== t.id ? 'hidden print:hidden' : ''}`}>
             
             {/* Cabecera del ticket impresa */}
