@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { 
-  LayoutDashboard, MonitorSmartphone, Users, Wrench, PlusCircle, Cpu, Package, Globe 
+  LayoutDashboard, MonitorSmartphone, Users, Wrench, PlusCircle, Cpu, Package, Globe, Menu, X 
 } from 'lucide-react';
 import type { Ticket, TicketStatus, Cliente, Tecnico, Repuesto } from './types';
 import { NewTicketModal } from './components/NewTicketModal';
@@ -25,8 +25,14 @@ function App() {
   const [inventario, setInventario] = useState<Repuesto[]>(initialInventario);
   
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [highlightedCliente, setHighlightedCliente] = useState<string | null>(null);
   const [clienteSearchTerm, setClienteSearchTerm] = useState('');
+
+  const handleNavClick = (v: typeof view) => {
+    setView(v);
+    setIsMobileMenuOpen(false);
+  };
 
   const handleGoToCliente = (documento: string) => {
     setView('clientes');
@@ -88,26 +94,39 @@ function App() {
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
+      {/* Sidebar Overlay para móvil */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-gray-900/50 z-40 md:hidden backdrop-blur-sm" 
+          onClick={() => setIsMobileMenuOpen(false)} 
+        />
+      )}
+      
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 flex-col hidden md:flex">
-        <div className="h-16 flex items-center px-6 bg-gray-900 border-b border-gray-800">
-          <Cpu className="h-7 w-7 text-brand-500 mr-2" />
-          <span className="text-white text-lg font-bold tracking-wide">Diag<span className="text-brand-500">Tech</span></span>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 flex-col transition-transform duration-300 md:relative md:flex ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+        <div className="h-16 flex items-center justify-between px-6 bg-gray-900 border-b border-gray-800">
+          <div className="flex items-center">
+            <Cpu className="h-7 w-7 text-brand-500 mr-2" />
+            <span className="text-white text-lg font-bold tracking-wide">Diag<span className="text-brand-500">Tech</span></span>
+          </div>
+          <button className="md:hidden text-gray-400 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>
+            <X className="w-6 h-6" />
+          </button>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          <button onClick={() => setView('dashboard')} className={`w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${view === 'dashboard' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+          <button onClick={() => handleNavClick('dashboard')} className={`w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${view === 'dashboard' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
             <LayoutDashboard className={`h-5 w-5 mr-3 ${view === 'dashboard' ? 'text-gray-300' : 'text-gray-400 group-hover:text-white'}`} /> Dashboard
           </button>
-          <button onClick={() => setView('equipos')} className={`w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${view === 'equipos' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+          <button onClick={() => handleNavClick('equipos')} className={`w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${view === 'equipos' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
             <MonitorSmartphone className={`h-5 w-5 mr-3 ${view === 'equipos' ? 'text-gray-300' : 'text-gray-400 group-hover:text-white'}`} /> Equipos
           </button>
-          <button onClick={() => setView('clientes')} className={`w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${view === 'clientes' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+          <button onClick={() => handleNavClick('clientes')} className={`w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${view === 'clientes' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
             <Users className={`h-5 w-5 mr-3 ${view === 'clientes' ? 'text-gray-300' : 'text-gray-400 group-hover:text-white'}`} /> Clientes
           </button>
-          <button onClick={() => setView('tecnicos')} className={`w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${view === 'tecnicos' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+          <button onClick={() => handleNavClick('tecnicos')} className={`w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${view === 'tecnicos' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
             <Wrench className={`h-5 w-5 mr-3 ${view === 'tecnicos' ? 'text-gray-300' : 'text-gray-400 group-hover:text-white'}`} /> Técnicos
           </button>
-          <button onClick={() => setView('inventario')} className={`w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${view === 'inventario' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+          <button onClick={() => handleNavClick('inventario')} className={`w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${view === 'inventario' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
             <Package className={`h-5 w-5 mr-3 ${view === 'inventario' ? 'text-gray-300' : 'text-gray-400 group-hover:text-white'}`} /> Inventario
           </button>
         </nav>
@@ -115,7 +134,7 @@ function App() {
         {/* Enlace al Portal Publico */}
         <div className="p-4 bg-gray-900 border-t border-gray-800">
           <button 
-            onClick={() => setView('tracking')} 
+            onClick={() => handleNavClick('tracking')} 
             className="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-brand-600 text-gray-300 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors border border-gray-700 hover:border-brand-500"
           >
             <Globe className="w-4 h-4" /> Ver Portal del Cliente
@@ -127,9 +146,15 @@ function App() {
         {/* Topbar */}
         <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0">
           <div className="flex items-center flex-1">
-            <h1 className="text-xl font-semibold text-gray-900">{headerTitles[view]}</h1>
+            <button 
+              className="md:hidden mr-3 text-gray-500 hover:text-gray-700" 
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+            <h1 className="text-xl font-semibold text-gray-900 truncate">{headerTitles[view]}</h1>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 pl-2">
             <button 
               onClick={() => setIsNewModalOpen(true)}
               className="inline-flex items-center gap-x-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-700"
