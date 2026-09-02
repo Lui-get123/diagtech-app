@@ -21,6 +21,51 @@ function App() {
   const [authLoading, setAuthLoading] = useState(false);
   const isAuthenticated = !!tallerId;
 
+  const loadData = async (tid: string) => {
+    // 1. Clientes
+    const { data: cData } = await supabase.from('clientes').select('*').eq('taller_id', tid);
+    if (cData) setClientes(cData.map(c => ({
+      id: c.id, nombre: c.nombre, documento: c.documento, telefono: c.telefono, tipo: c.tipo, email: c.email
+    })));
+
+    // 2. Tecnicos
+    const { data: tData } = await supabase.from('tecnicos').select('*').eq('taller_id', tid);
+    if (tData) setTecnicos(tData.map(t => ({
+      id: t.id, nombre: t.nombre, documento: t.documento, especialidad: t.especialidad, telefono: t.telefono
+    })));
+
+    // 3. Inventario
+    const { data: rData } = await supabase.from('repuestos').select('*').eq('taller_id', tid);
+    if (rData) setInventario(rData.map(r => ({
+      id: r.id, nombre: r.nombre, categoria: r.categoria, stock: r.stock, precioVenta: r.precio_venta
+    })));
+
+    // 4. Tickets
+    const { data: tickData } = await supabase.from('tickets').select('*, cliente:clientes(*), tecnico:tecnicos(*)').eq('taller_id', tid);
+    if (tickData) {
+      setTickets(tickData.map(t => ({
+        id: t.codigo,
+        cliente: t.cliente,
+        equipo: { tipo: t.equipo_tipo, modelo: t.equipo_modelo, falla: t.equipo_falla },
+        tecnicoAsignado: t.tecnico ? { id: t.tecnico.id, nombre: t.tecnico.nombre } : undefined,
+        estado: t.estado as TicketStatus,
+        fechaIngreso: t.fecha_ingreso,
+        finanzas: { costoTotal: t.costo_total, abono: t.abono }
+      })));
+    }
+  };
+
+  useEffect(() => {
+    if (tallerId) {
+      loadData(tallerId);
+    } else {
+      setTickets([]);
+      setClientes([]);
+      setTecnicos([]);
+      setInventario([]);
+    }
+  }, [tallerId]);
+
   const getInitialView = () => {
     const v = urlParams.get('view');
     if (!v) return 'landing';
@@ -186,29 +231,113 @@ function App() {
     setTimeout(() => setHighlightedCliente(null), 3000);
   };
 
-  const handleAddTicket = (data: Omit<Ticket, 'id' | 'fechaIngreso' | 'estado'>) => {
-    const nextIdNumber = tickets.length > 0 ? Math.max(...tickets.map(t => parseInt(t.id.split('-')[1]))) + 1 : 1000;
-    const newTicket: Ticket = { ...data, id: `TK-${nextIdNumber}`, estado: 'Ingresado', fechaIngreso: new Date().toISOString() };
-    setTickets([newTicket, ...tickets]);
-    
-    // Si es un cliente nuevo, agregarlo a la BD local
-    if (!clientes.find(c => c.documento === data.cliente.documento)) {
-      setClientes([...clientes, { ...data.cliente, id: `CLI-${Date.now()}`, email: '' }]);
+  const handleAddTicket = async (data: Omit<Ticket, 'id' | 'fechaIngreso' | 'estado'>) => {
+    if (!tallerId) return;
+
+    let clienteId = '';
+    const existingClient = clientes.find(c => c.documento === data.cliente.documento);
+    if (existingClient) {
+      clienteId = existingClient.id;
+    } else {
+      const { data: newClient } = await supabase.from('clientes').insert({
+        taller_id: tallerId,
+        nombre: data.cliente.nombre,
+        documento: data.cliente.documento,
+        telefono: data.cliente.telefono,
+        tipo: data.cliente.tipo
+      }).select('id').single();
+      if (newClient) clienteId = newClient.id;
     }
+
+    const tkNum = tickets.length > 0 ? Math.max(...tickets.map(t => parseInt(t.id.split('-')[1] || '1000'))) + 1 : 1000;
+    const codigo = `TK-${tkNum}`;
+
+    await supabase.from('tickets').insert({
+      taller_id: tallerId,
+      cliente_id: clienteId,
+      codigo,
+      equipo_tipo: data.equipo.tipo,
+      equipo_modelo: data.equipo.modelo,
+      equipo_falla: data.equipo.falla,
+      costo_total: data.finanzas?.costoTotal || 0,
+      abono: data.finanzas?.abono || 0,
+      estado: 'Ingresado'
+    });
+
+    loadData(tallerId);
   };
 
-  const handleUpdateStatus = (id: string, newStatus: TicketStatus, finanzas?: { costoTotal: number; abono: number }, repuestosUsados?: string[]) => {
-    setTickets(tickets.map(t => t.id === id ? { 
-      ...t, 
-      estado: newStatus, 
-      ...(finanzas ? { finanzas } : {}) 
-    } : t));
+  const handleUpdateStatus = async (id: string, newStatus: TicketStatus, finanzas?: { costoTotal: number; abono: number }, repuestosUsados?: string[]) => {
+    if (!tallerId) return;
+
+    const updateData: any = { estado: newStatus };
+    if (finanzas) {
+      updateData.costo_total = finanzas.costoTotal;
+      updateData.abono = finanzas.abono;
+    }
+    
+    await supabase.from('tickets').update(updateData).eq('codigo', id).eq('taller_id', tallerId);
 
     if (repuestosUsados && repuestosUsados.length > 0) {
-      setInventario(prev => prev.map(r => 
-        repuestosUsados.includes(r.id) ? { ...r, stock: Math.max(0, r.stock - 1) } : r
-      ));
+      for (const repId of repuestosUsados) {
+        const rep = inventario.find(r => r.id === repId);
+        if (rep && rep.stock > 0) {
+          await supabase.from('repuestos').update({ stock: rep.stock - 1 }).eq('id', repId);
+        }
+      }
     }
+
+    loadData(tallerId);
+  };
+
+  const handleAddCliente = async (cliente: Cliente) => {
+    if (!tallerId) return;
+    await supabase.from('clientes').insert({
+      taller_id: tallerId,
+      nombre: cliente.nombre,
+      documento: cliente.documento,
+      telefono: cliente.telefono,
+      email: cliente.email,
+      tipo: cliente.tipo
+    });
+    loadData(tallerId);
+  };
+
+  const handleAddTecnico = async (tecnico: Tecnico) => {
+    if (!tallerId) return;
+    await supabase.from('tecnicos').insert({
+      taller_id: tallerId,
+      nombre: tecnico.nombre,
+      documento: tecnico.documento,
+      especialidad: tecnico.especialidad,
+      telefono: tecnico.telefono
+    });
+    loadData(tallerId);
+  };
+
+  const handleAddRepuesto = async (repuesto: Repuesto) => {
+    if (!tallerId) return;
+    await supabase.from('repuestos').insert({
+      taller_id: tallerId,
+      nombre: repuesto.nombre,
+      categoria: repuesto.categoria,
+      stock: repuesto.stock,
+      precio_venta: repuesto.precioVenta
+    });
+    loadData(tallerId);
+  };
+
+  const handleAddRepuestosBulk = async (nuevos: Repuesto[]) => {
+    if (!tallerId) return;
+    const inserts = nuevos.map(r => ({
+      taller_id: tallerId,
+      nombre: r.nombre,
+      categoria: r.categoria,
+      stock: r.stock,
+      precio_venta: r.precioVenta
+    }));
+    await supabase.from('repuestos').insert(inserts);
+    loadData(tallerId);
   };
 
   // Titulo dinamico del Header
@@ -290,7 +419,7 @@ function App() {
         >
           ← Volver a DiagTech
         </button>
-        <TrackingView tickets={tickets} />
+        <TrackingView />
       </div>
     );
   }
@@ -419,14 +548,14 @@ function App() {
             <ClientesView 
               clientes={clientes} 
               tickets={tickets} 
-              onAddCliente={c => setClientes([...clientes, c])} 
+              onAddCliente={handleAddCliente} 
               searchTerm={clienteSearchTerm}
               setSearchTerm={setClienteSearchTerm}
               highlightedCliente={highlightedCliente}
             />
           )}
-          {view === 'tecnicos' && <TecnicosView tecnicos={tecnicos} onAddTecnico={t => setTecnicos([...tecnicos, t])} />}
-          {view === 'inventario' && <InventarioView inventario={inventario} onAddRepuesto={(r) => setInventario([...inventario, r])} onAddRepuestosBulk={(nuevos) => setInventario([...inventario, ...nuevos])} />}
+          {view === 'tecnicos' && <TecnicosView tecnicos={tecnicos} onAddTecnico={handleAddTecnico} />}
+          {view === 'inventario' && <InventarioView inventario={inventario} onAddRepuesto={handleAddRepuesto} onAddRepuestosBulk={handleAddRepuestosBulk} />}
         </div>
       </main>
 

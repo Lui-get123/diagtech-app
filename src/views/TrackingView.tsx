@@ -1,30 +1,49 @@
 import { useState, useEffect } from 'react';
-import type { Ticket } from '../types';
+import type { Ticket, TicketStatus } from '../types';
 import { Search, CheckCircle, Clock, Wrench, Package } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
-interface Props {
-  tickets: Ticket[];
-}
-
-export function TrackingView({ tickets }: Props) {
+export function TrackingView() {
   const urlParams = new URLSearchParams(window.location.search);
   const initialTicket = urlParams.get('ticket') || '';
 
   const [codigo, setCodigo] = useState(initialTicket);
   const [searchedTicket, setSearchedTicket] = useState<Ticket | null | undefined>(undefined);
+  const [loading, setLoading] = useState(false);
 
-  // Auto-búsqueda si hay un ticket en la URL
-  useEffect(() => {
-    if (initialTicket && tickets.length > 0) {
-      const found = tickets.find(t => t.id.toLowerCase() === initialTicket.toLowerCase().trim());
-      setSearchedTicket(found || null);
+  const fetchTicket = async (searchCode: string) => {
+    if (!searchCode) return;
+    setLoading(true);
+    const { data } = await supabase
+      .from('tickets')
+      .select('*, cliente:clientes(*)')
+      .ilike('codigo', searchCode.trim())
+      .single();
+    
+    if (data) {
+      setSearchedTicket({
+        id: data.codigo,
+        cliente: data.cliente,
+        equipo: { tipo: data.equipo_tipo, modelo: data.equipo_modelo, falla: data.equipo_falla },
+        estado: data.estado as TicketStatus,
+        fechaIngreso: data.fecha_ingreso,
+        finanzas: { costoTotal: data.costo_total, abono: data.abono }
+      });
+    } else {
+      setSearchedTicket(null);
     }
-  }, [initialTicket, tickets]);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (initialTicket) {
+      fetchTicket(initialTicket);
+    }
+  }, [initialTicket]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const found = tickets.find(t => t.id.toLowerCase() === codigo.toLowerCase().trim());
-    setSearchedTicket(found || null);
+    fetchTicket(codigo);
   };
 
   const getStepNumber = (estado: string) => {
@@ -60,19 +79,27 @@ export function TrackingView({ tickets }: Props) {
                 className="flex-1 rounded-lg border-gray-300 border p-3 focus:ring-brand-500 focus:border-brand-500" 
                 placeholder="TK-XXXX" 
               />
-              <button type="submit" className="bg-brand-600 text-white px-4 rounded-lg hover:bg-brand-700">
+              <button type="submit" className="bg-brand-600 text-white px-4 flex items-center justify-center rounded-lg hover:bg-brand-700">
                 <Search className="w-5 h-5" />
+                <span className="ml-2 font-medium">Buscar</span>
               </button>
             </div>
           </form>
 
-          {searchedTicket === null && (
+          {loading && (
+            <div className="mt-8 text-center text-gray-500">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600 mx-auto mb-2"></div>
+              Buscando información en la nube...
+            </div>
+          )}
+
+          {!loading && searchedTicket === null && (
             <div className="bg-red-50 text-red-700 p-4 rounded-lg text-center font-medium">
               No encontramos ningún equipo con ese código. Por favor verifica.
             </div>
           )}
 
-          {searchedTicket && (
+          {!loading && searchedTicket && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 mb-6">
                 <h3 className="font-bold text-gray-900 text-lg">{searchedTicket.equipo.modelo}</h3>
