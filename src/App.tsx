@@ -19,9 +19,30 @@ const initialInventario: Repuesto[] = [];
 
 function App() {
   const urlParams = new URLSearchParams(window.location.search);
-  const initialView = (urlParams.get('view') as any) || 'dashboard';
+  
+  // Autenticación básica
+  const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('diagtech_auth') === 'true');
 
-  const [view, setView] = useState<'dashboard' | 'equipos' | 'clientes' | 'tecnicos' | 'inventario' | 'tracking'>(initialView);
+  const getInitialView = () => {
+    const v = urlParams.get('view');
+    if (!v) return 'tracking'; // La raíz SIEMPRE es el portal de clientes
+    
+    if (v === 'tracking') return 'tracking';
+    
+    // URL Secreta para el administrador
+    if (v === 'diagtech-admin') {
+      return isAuthenticated ? 'dashboard' : 'login';
+    }
+    
+    // Rutas internas del panel
+    if (['dashboard', 'equipos', 'clientes', 'tecnicos', 'inventario'].includes(v)) {
+      return isAuthenticated ? (v as any) : 'tracking';
+    }
+    
+    return 'tracking'; // Fallback absoluto
+  };
+
+  const [view, setView] = useState<'dashboard' | 'equipos' | 'clientes' | 'tecnicos' | 'inventario' | 'tracking' | 'login'>(getInitialView());
   
   const [tickets, setTickets] = useState<Ticket[]>(() => {
     const saved = localStorage.getItem('diagtech_tickets');
@@ -54,8 +75,6 @@ function App() {
   const [highlightedCliente, setHighlightedCliente] = useState<string | null>(null);
   const [clienteSearchTerm, setClienteSearchTerm] = useState('');
   
-  // Autenticación básica
-  const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('diagtech_auth') === 'true');
   const [passwordInput, setPasswordInput] = useState('');
   const ADMIN_PASSWORD = 'admin'; // Contraseña por defecto
 
@@ -64,6 +83,8 @@ function App() {
     if (passwordInput === ADMIN_PASSWORD) {
       localStorage.setItem('diagtech_auth', 'true');
       setIsAuthenticated(true);
+      setView('dashboard');
+      window.history.pushState({}, '', '?view=dashboard');
     } else {
       alert('Contraseña incorrecta. Acceso denegado.');
       setPasswordInput('');
@@ -73,17 +94,18 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('diagtech_auth');
     setIsAuthenticated(false);
+    setView('tracking');
+    window.history.pushState({}, '', '?view=tracking');
   };
 
   const handleNavClick = (v: typeof view) => {
     setView(v);
     setIsMobileMenuOpen(false);
     
-    // Cambiar la URL de forma limpia para que se puedan compartir los links
+    // Cambiar la URL de forma limpia
     const url = new URL(window.location.href);
-    if (v === 'dashboard') {
-      url.searchParams.delete('view');
-      url.searchParams.delete('ticket');
+    if (v === 'tracking') {
+      url.searchParams.set('view', 'tracking');
     } else {
       url.searchParams.set('view', v);
     }
@@ -142,8 +164,8 @@ function App() {
     );
   }
 
-  // Protección del Dashboard
-  if (!isAuthenticated) {
+  // Protección del Dashboard: Si la vista es login, mostramos la pantalla de bloqueo
+  if (view === 'login') {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
