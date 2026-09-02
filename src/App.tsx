@@ -9,6 +9,7 @@ import { EquiposView } from './views/EquiposView';
 import { ClientesView } from './views/ClientesView';
 import { TecnicosView } from './views/TecnicosView';
 import { InventarioView } from './views/InventarioView';
+import { FinanzasView } from './views/FinanzasView';
 import { TrackingView } from './views/TrackingView';
 import { LandingView } from './views/LandingView';
 import { supabase } from './lib/supabase';
@@ -78,14 +79,14 @@ function App() {
       return isAuthenticated ? 'dashboard' : 'login';
     }
     
-    if (['dashboard', 'equipos', 'clientes', 'tecnicos', 'inventario'].includes(v)) {
+    if (['dashboard', 'equipos', 'clientes', 'tecnicos', 'inventario', 'finanzas'].includes(v)) {
       return isAuthenticated ? (v as any) : 'login';
     }
     
     return 'landing';
   };
 
-  const [view, setView] = useState<'dashboard' | 'equipos' | 'clientes' | 'tecnicos' | 'inventario' | 'tracking' | 'login' | 'landing' | 'register'>(getInitialView());
+  const [view, setView] = useState<'dashboard' | 'equipos' | 'clientes' | 'tecnicos' | 'inventario' | 'finanzas' | 'tracking' | 'login' | 'landing' | 'register'>(getInitialView());
   
   // Estados de formularios de Auth
   const [emailInput, setEmailInput] = useState('');
@@ -109,7 +110,7 @@ function App() {
       else if (v === 'tracking') nextView = 'tracking';
       else if (v === 'register') nextView = isAuthenticated ? 'dashboard' : 'register';
       else if (v === 'login' || v === 'diagtech-admin') nextView = isAuthenticated ? 'dashboard' : 'login';
-      else if (['dashboard', 'equipos', 'clientes', 'tecnicos', 'inventario'].includes(v)) {
+      else if (['dashboard', 'equipos', 'clientes', 'tecnicos', 'inventario', 'finanzas'].includes(v)) {
         nextView = isAuthenticated ? v : 'login';
       }
       
@@ -373,6 +374,7 @@ function App() {
     clientes: 'Directorio de Clientes',
     tecnicos: 'Gestión de Técnicos',
     inventario: 'Control de Inventario',
+    finanzas: 'Gestión Financiera',
     tracking: 'Portal de Seguimiento'
   };
 
@@ -531,6 +533,9 @@ function App() {
           <button onClick={() => handleNavClick('inventario')} className={`w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${view === 'inventario' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
             <Package className={`h-5 w-5 mr-3 ${view === 'inventario' ? 'text-gray-300' : 'text-gray-400 group-hover:text-white'}`} /> Inventario
           </button>
+          <button onClick={() => handleNavClick('finanzas')} className={`w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${view === 'finanzas' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+            <LayoutDashboard className={`h-5 w-5 mr-3 ${view === 'finanzas' ? 'text-gray-300' : 'text-gray-400 group-hover:text-white'}`} /> Finanzas
+          </button>
         </nav>
         
         {/* Botón de Logout */}
@@ -583,6 +588,7 @@ function App() {
           )}
           {view === 'tecnicos' && <TecnicosView tecnicos={tecnicos} onAddTecnico={handleAddTecnico} onDeleteTecnico={handleDeleteTecnico} />}
           {view === 'inventario' && <InventarioView inventario={inventario} onAddRepuesto={handleAddRepuesto} onAddRepuestosBulk={handleAddRepuestosBulk} onDeleteRepuesto={handleDeleteRepuesto} />}
+          {view === 'finanzas' && <FinanzasView tickets={tickets} />}
         </div>
       </main>
 
