@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, MonitorSmartphone, Users, Wrench, PlusCircle, Cpu, Package, Globe, Menu, X 
+  LayoutDashboard, MonitorSmartphone, Users, Wrench, PlusCircle, Cpu, Package, Globe, Menu, X, Lock, LogOut 
 } from 'lucide-react';
 import type { Ticket, TicketStatus, Cliente, Tecnico, Repuesto } from './types';
 import { NewTicketModal } from './components/NewTicketModal';
@@ -53,6 +53,27 @@ function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [highlightedCliente, setHighlightedCliente] = useState<string | null>(null);
   const [clienteSearchTerm, setClienteSearchTerm] = useState('');
+  
+  // Autenticación básica
+  const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('diagtech_auth') === 'true');
+  const [passwordInput, setPasswordInput] = useState('');
+  const ADMIN_PASSWORD = 'admin'; // Contraseña por defecto
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === ADMIN_PASSWORD) {
+      localStorage.setItem('diagtech_auth', 'true');
+      setIsAuthenticated(true);
+    } else {
+      alert('Contraseña incorrecta. Acceso denegado.');
+      setPasswordInput('');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('diagtech_auth');
+    setIsAuthenticated(false);
+  };
 
   const handleNavClick = (v: typeof view) => {
     setView(v);
@@ -121,6 +142,36 @@ function App() {
     );
   }
 
+  // Protección del Dashboard
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+          <div className="mx-auto w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mb-4">
+            <Lock className="w-8 h-8 text-brand-600" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Acceso Restringido</h2>
+          <p className="mt-2 text-sm text-gray-600">Solo personal autorizado de DiagTech</p>
+        </div>
+        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-200">
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Contraseña de Administrador</label>
+                <div className="mt-1">
+                  <input type="password" required value={passwordInput} onChange={e => setPasswordInput(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm" placeholder="••••••••" />
+                </div>
+              </div>
+              <button type="submit" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none">
+                Ingresar al Sistema
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
       {/* Sidebar Overlay para móvil */}
@@ -160,13 +211,19 @@ function App() {
           </button>
         </nav>
         
-        {/* Enlace al Portal Publico */}
-        <div className="p-4 bg-gray-900 border-t border-gray-800">
+        {/* Enlace al Portal Publico y Logout */}
+        <div className="p-4 bg-gray-900 border-t border-gray-800 space-y-3">
           <button 
             onClick={() => handleNavClick('tracking')} 
             className="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-brand-600 text-gray-300 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors border border-gray-700 hover:border-brand-500"
           >
             <Globe className="w-4 h-4" /> Ver Portal del Cliente
+          </button>
+          <button 
+            onClick={handleLogout} 
+            className="w-full flex items-center justify-center gap-2 text-gray-400 hover:text-red-400 px-4 py-2 text-sm font-medium transition-colors"
+          >
+            <LogOut className="w-4 h-4" /> Cerrar Sesión
           </button>
         </div>
       </aside>
