@@ -27,6 +27,13 @@ export function InventarioView({ inventario, onAddRepuesto, onAddRepuestosBulk }
     setIsAdding(false);
   };
 
+  const [rawCsvData, setRawCsvData] = useState<string[][]>([]);
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
+  const [isMapping, setIsMapping] = useState(false);
+  const [colMap, setColMap] = useState<{nombre: number, categoria: number, stock: number, precio: number}>({
+    nombre: -1, categoria: -1, stock: -1, precio: -1
+  });
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -34,37 +41,61 @@ export function InventarioView({ inventario, onAddRepuesto, onAddRepuestosBulk }
     const reader = new FileReader();
     reader.onload = (event) => {
       const csv = event.target?.result as string;
-      const lines = csv.split('\n');
-      const nuevosRepuestos: Repuesto[] = [];
-      
-      lines.forEach((line, index) => {
-        // Ignorar encabezados o lineas vacías
-        if (index === 0 || !line.trim()) return; 
-        
-        // Asume formato: Nombre, Categoria, Stock, Precio
-        const [nombre, categoria, stockStr, precioStr] = line.split(',');
-        if (nombre) {
-          nuevosRepuestos.push({
-            id: `REP-XL-${Date.now()}-${index}`,
-            nombre: nombre.trim(),
-            categoria: categoria ? categoria.trim() : 'Otros',
-            stock: parseInt(stockStr) || 0,
-            precioVenta: parseInt(precioStr) || 0
-          });
-        }
-      });
-
-      if (nuevosRepuestos.length > 0) {
-        onAddRepuestosBulk(nuevosRepuestos);
-        alert(`¡Éxito! Se importaron ${nuevosRepuestos.length} repuestos desde el archivo.`);
-      } else {
-        alert('No se encontraron datos válidos. Asegúrate de usar el formato correcto.');
+      const lines = csv.split('\n').filter(l => l.trim().length > 0);
+      if (lines.length < 2) {
+        alert('El archivo está vacío o no tiene suficientes datos.');
+        return;
       }
       
-      // Limpiar input
+      const headers = lines[0].split(',').map(h => h.trim());
+      const dataRows = lines.slice(1).map(l => l.split(',').map(c => c.trim()));
+      
+      setCsvHeaders(headers);
+      setRawCsvData(dataRows);
+      
+      // Auto-adivinar columnas si los nombres coinciden
+      setColMap({
+        nombre: headers.findIndex(h => h.toLowerCase().includes('nombre') || h.toLowerCase().includes('repuesto')),
+        categoria: headers.findIndex(h => h.toLowerCase().includes('cat')),
+        stock: headers.findIndex(h => h.toLowerCase().includes('stock') || h.toLowerCase().includes('cant')),
+        precio: headers.findIndex(h => h.toLowerCase().includes('precio') || h.toLowerCase().includes('costo'))
+      });
+      
+      setIsMapping(true);
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
     reader.readAsText(file);
+  };
+
+  const handleConfirmImport = () => {
+    if (colMap.nombre === -1 || colMap.stock === -1 || colMap.precio === -1) {
+      alert('Debes seleccionar al menos las columnas de Nombre, Stock y Precio.');
+      return;
+    }
+
+    const nuevosRepuestos: Repuesto[] = [];
+    rawCsvData.forEach((row, index) => {
+      const nombreVal = row[colMap.nombre];
+      if (nombreVal) {
+        nuevosRepuestos.push({
+          id: `REP-XL-${Date.now()}-${index}`,
+          nombre: nombreVal,
+          categoria: colMap.categoria !== -1 ? row[colMap.categoria] || 'Otros' : 'Otros',
+          stock: parseInt(row[colMap.stock]) || 0,
+          precioVenta: parseInt(row[colMap.precio]) || 0
+        });
+      }
+    });
+
+    if (nuevosRepuestos.length > 0) {
+      onAddRepuestosBulk(nuevosRepuestos);
+      alert(`¡Éxito! Se importaron ${nuevosRepuestos.length} repuestos correctamente.`);
+    } else {
+      alert('No se pudo extraer ningún dato con la configuración seleccionada.');
+    }
+    
+    setIsMapping(false);
+    setRawCsvData([]);
   };
 
   const filtered = inventario.filter(r => r.nombre.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -93,7 +124,7 @@ export function InventarioView({ inventario, onAddRepuesto, onAddRepuestosBulk }
         </div>
       </div>
 
-      {isAdding && (
+      {isAdding && !isMapping && (
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="md:col-span-2"><label className="block text-sm text-gray-700 mb-1">Nombre del Repuesto</label><input required value={nombre} onChange={e=>setNombre(e.target.value)} className="w-full border rounded-md p-2 focus:ring-brand-500" placeholder="Ej. Pantalla iPhone 13 Pro" /></div>
           <div><label className="block text-sm text-gray-700 mb-1">Categoría</label><select value={categoria} onChange={e=>setCategoria(e.target.value)} className="w-full border rounded-md p-2"><option>Pantallas</option><option>Baterías</option><option>Cargadores</option><option>Cámaras</option><option>Otros</option></select></div>
@@ -104,6 +135,52 @@ export function InventarioView({ inventario, onAddRepuesto, onAddRepuestosBulk }
             <button type="submit" className="bg-green-600 text-white px-6 py-2 rounded-md font-medium hover:bg-green-700">Guardar en Inventario</button>
           </div>
         </form>
+      )}
+
+      {isMapping && (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-brand-200 mb-8">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Traductor de Archivo Excel (.csv)</h3>
+          <p className="text-sm text-gray-500 mb-6">Hemos leído tu archivo. Por favor indícanos qué columna corresponde a cada dato.</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div>
+              <label className="block text-sm font-semibold text-brand-700 mb-2">Nombre del Repuesto <span className="text-red-500">*</span></label>
+              <select value={colMap.nombre} onChange={e => setColMap({...colMap, nombre: Number(e.target.value)})} className="w-full border-gray-300 rounded-md shadow-sm p-2 focus:ring-brand-500 border">
+                <option value={-1}>-- Seleccionar --</option>
+                {csvHeaders.map((h, i) => <option key={i} value={i}>{h}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-brand-700 mb-2">Categoría (Opcional)</label>
+              <select value={colMap.categoria} onChange={e => setColMap({...colMap, categoria: Number(e.target.value)})} className="w-full border-gray-300 rounded-md shadow-sm p-2 focus:ring-brand-500 border">
+                <option value={-1}>-- No importar --</option>
+                {csvHeaders.map((h, i) => <option key={i} value={i}>{h}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-brand-700 mb-2">Stock Disponible <span className="text-red-500">*</span></label>
+              <select value={colMap.stock} onChange={e => setColMap({...colMap, stock: Number(e.target.value)})} className="w-full border-gray-300 rounded-md shadow-sm p-2 focus:ring-brand-500 border">
+                <option value={-1}>-- Seleccionar --</option>
+                {csvHeaders.map((h, i) => <option key={i} value={i}>{h}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-brand-700 mb-2">Precio de Venta <span className="text-red-500">*</span></label>
+              <select value={colMap.precio} onChange={e => setColMap({...colMap, precio: Number(e.target.value)})} className="w-full border-gray-300 rounded-md shadow-sm p-2 focus:ring-brand-500 border">
+                <option value={-1}>-- Seleccionar --</option>
+                {csvHeaders.map((h, i) => <option key={i} value={i}>{h}</option>)}
+              </select>
+            </div>
+          </div>
+          
+          <div className="flex justify-end gap-3 border-t pt-4">
+            <button onClick={() => {setIsMapping(false); setRawCsvData([]);}} className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar Importación</button>
+            <button onClick={handleConfirmImport} className="px-4 py-2 text-sm text-white bg-brand-600 rounded-lg hover:bg-brand-700 flex items-center">
+              <Upload className="w-4 h-4 mr-2" />
+              Confirmar y Subir a Supabase
+            </button>
+          </div>
+        </div>
       )}
 
       <div className="bg-white shadow-sm ring-1 ring-gray-200 sm:rounded-xl overflow-hidden">
