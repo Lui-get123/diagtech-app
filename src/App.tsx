@@ -12,7 +12,6 @@ import { InventarioView } from './views/InventarioView';
 import { TrackingView } from './views/TrackingView';
 import { LandingView } from './views/LandingView';
 import { supabase } from './lib/supabase';
-import type { Session } from '@supabase/supabase-js';
 
 // Datos Iniciales (Limpios para producción/pruebas reales)
 const initialTickets: Ticket[] = [];
