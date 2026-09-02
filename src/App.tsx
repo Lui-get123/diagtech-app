@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, MonitorSmartphone, Users, Wrench, PlusCircle, Cpu, Package, Globe, Menu, X, Lock, LogOut 
+  LayoutDashboard, MonitorSmartphone, Users, Wrench, PlusCircle, Cpu, Package, Menu, X, Lock, LogOut 
 } from 'lucide-react';
 import type { Ticket, TicketStatus, Cliente, Tecnico, Repuesto } from './types';
 import { NewTicketModal } from './components/NewTicketModal';
