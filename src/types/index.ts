@@ -22,9 +22,29 @@ export interface Ticket {
   cliente: Cliente;
   equipo: {
     tipo: string; // ej. Laptop, Smartphone
+    marca?: string;
     modelo: string;
+    imei?: string;
+    color?: string;
+    contrasena?: string; // PIN/Patrón
     falla: string;
   };
+  recepcion?: {
+    checklist: {
+      pantalla: 'OK' | 'Falla' | 'No Prob';
+      puertoCarga: 'OK' | 'Falla' | 'No Prob';
+      camaras: 'OK' | 'Falla' | 'No Prob';
+      botones: 'OK' | 'Falla' | 'No Prob';
+      audio: 'OK' | 'Falla' | 'No Prob';
+      senal: 'OK' | 'Falla' | 'No Prob';
+      estetico: 'OK' | 'Falla' | 'No Prob';
+    };
+    observacionesEsteticas?: string;
+  };
+  firmaCliente?: string; // Base64 de la firma
+  tiempoEstimado?: string;
+  garantiaDias?: number;
+  repuestosUsados?: { id: string; nombre: string; precio: number }[];
   tecnicoAsignado?: {
     id: string;
     nombre: string;
@@ -35,6 +55,8 @@ export interface Ticket {
   finanzas?: {
     costoTotal: number;
     abono: number;
+    metodoAbono?: string;
+    gastosInternos?: { concepto: string; monto: number }[];
   };
 }
 
