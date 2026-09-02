@@ -119,6 +119,7 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('diagtech_auth');
     setIsAuthenticated(false);
+    setPasswordInput('');
     setView('login');
     window.history.pushState({}, '', '?view=login');
   };
@@ -297,17 +298,11 @@ function App() {
           </button>
         </nav>
         
-        {/* Enlace al Portal Publico y Logout */}
-        <div className="p-4 bg-gray-900 border-t border-gray-800 space-y-3">
-          <button 
-            onClick={() => handleNavClick('tracking')} 
-            className="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-brand-600 text-gray-300 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors border border-gray-700 hover:border-brand-500"
-          >
-            <Globe className="w-4 h-4" /> Ver Portal del Cliente
-          </button>
+        {/* Botón de Logout */}
+        <div className="p-4 bg-gray-900 border-t border-gray-800">
           <button 
             onClick={handleLogout} 
-            className="w-full flex items-center justify-center gap-2 text-gray-400 hover:text-red-400 px-4 py-2 text-sm font-medium transition-colors"
+            className="w-full flex items-center justify-center gap-2 text-gray-400 hover:bg-gray-800 hover:text-red-400 px-4 py-3 rounded-lg text-sm font-medium transition-colors"
           >
             <LogOut className="w-4 h-4" /> Cerrar Sesión
           </button>
