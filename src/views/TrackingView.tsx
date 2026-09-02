@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Ticket } from '../types';
 import { Search, CheckCircle, Clock, Wrench, Package } from 'lucide-react';
 
@@ -7,8 +7,19 @@ interface Props {
 }
 
 export function TrackingView({ tickets }: Props) {
-  const [codigo, setCodigo] = useState('');
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialTicket = urlParams.get('ticket') || '';
+
+  const [codigo, setCodigo] = useState(initialTicket);
   const [searchedTicket, setSearchedTicket] = useState<Ticket | null | undefined>(undefined);
+
+  // Auto-búsqueda si hay un ticket en la URL
+  useEffect(() => {
+    if (initialTicket && tickets.length > 0) {
+      const found = tickets.find(t => t.id.toLowerCase() === initialTicket.toLowerCase().trim());
+      setSearchedTicket(found || null);
+    }
+  }, [initialTicket, tickets]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

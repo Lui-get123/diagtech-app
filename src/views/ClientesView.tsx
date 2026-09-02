@@ -48,19 +48,20 @@ export function ClientesView({ clientes, tickets, onAddCliente, searchTerm, setS
     let message = `Hola ${cliente.nombre}, nos comunicamos de DiagTech.`;
     
     if (activeTicket) {
+      const trackingLink = `${window.location.origin}/?view=tracking&ticket=${activeTicket.id}`;
       switch(activeTicket.estado) {
         case 'Ingresado': 
-          message += ` Le confirmamos que su equipo ${activeTicket.equipo.modelo} fue registrado exitosamente.`; break;
+          message += ` Le confirmamos que su equipo ${activeTicket.equipo.modelo} fue registrado exitosamente. Puede ver el estado en vivo aquí: ${trackingLink}`; break;
         case 'Diagnosticando': 
-          message += ` Le informamos que su equipo ${activeTicket.equipo.modelo} está en este momento en mesa de diagnóstico.`; break;
+          message += ` Le informamos que su equipo ${activeTicket.equipo.modelo} está en este momento en mesa de diagnóstico. Puede seguir el progreso aquí: ${trackingLink}`; break;
         case 'En Reparación': 
-          message += ` Le informamos que nuestro técnico ya está trabajando en la reparación de su ${activeTicket.equipo.modelo}.`; break;
+          message += ` Le informamos que nuestro técnico ya está trabajando en la reparación de su ${activeTicket.equipo.modelo}. Seguimiento en vivo: ${trackingLink}`; break;
         case 'En Espera (Repuesto)': 
-          message += ` Su equipo ${activeTicket.equipo.modelo} se encuentra pausado a la espera de un repuesto. Nos comunicaremos pronto.`; break;
+          message += ` Su equipo ${activeTicket.equipo.modelo} se encuentra pausado a la espera de un repuesto. Detalles aquí: ${trackingLink}`; break;
         case 'Listo p/ Entrega': 
-          message += ` ¡Buenas noticias! Su equipo ${activeTicket.equipo.modelo} ya está reparado y listo. Puede pasar a recogerlo cuando guste.`; break;
+          message += ` ¡Buenas noticias! Su equipo ${activeTicket.equipo.modelo} ya está reparado y listo. Puede pasar a recogerlo. Comprobante: ${trackingLink}`; break;
         case 'Entregado':
-          message += ` Esperamos que su equipo ${activeTicket.equipo.modelo} esté funcionando perfectamente. ¡Gracias por confiar en nosotros!`; break;
+          message += ` Esperamos que su equipo ${activeTicket.equipo.modelo} esté funcionando perfectamente. Historial de reparación: ${trackingLink}`; break;
       }
     } else {
       message += ` ¿En qué le podemos ayudar el día de hoy?`;

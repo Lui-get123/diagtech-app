@@ -18,7 +18,10 @@ const initialClientes: Cliente[] = [];
 const initialInventario: Repuesto[] = [];
 
 function App() {
-  const [view, setView] = useState<'dashboard' | 'equipos' | 'clientes' | 'tecnicos' | 'inventario' | 'tracking'>('dashboard');
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialView = (urlParams.get('view') as any) || 'dashboard';
+
+  const [view, setView] = useState<'dashboard' | 'equipos' | 'clientes' | 'tecnicos' | 'inventario' | 'tracking'>(initialView);
   const [tickets, setTickets] = useState<Ticket[]>(initialTickets);
   const [tecnicos, setTecnicos] = useState<Tecnico[]>(initialTecnicos);
   const [clientes, setClientes] = useState<Cliente[]>(initialClientes);
@@ -32,6 +35,16 @@ function App() {
   const handleNavClick = (v: typeof view) => {
     setView(v);
     setIsMobileMenuOpen(false);
+    
+    // Cambiar la URL de forma limpia para que se puedan compartir los links
+    const url = new URL(window.location.href);
+    if (v === 'dashboard') {
+      url.searchParams.delete('view');
+      url.searchParams.delete('ticket');
+    } else {
+      url.searchParams.set('view', v);
+    }
+    window.history.pushState({}, '', url.toString());
   };
 
   const handleGoToCliente = (documento: string) => {
