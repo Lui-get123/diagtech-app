@@ -23,45 +23,28 @@ const initialInventario: Repuesto[] = [];
 function App() {
   const urlParams = new URLSearchParams(window.location.search);
   
-  // Autenticación Real con Supabase
-  const [session, setSession] = useState<Session | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const isAuthenticated = !!session;
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setAuthLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  // Autenticación Simple (Guardamos el ID del taller localmente)
+  const [tallerId, setTallerId] = useState<string | null>(() => localStorage.getItem('diagtech_taller_id'));
+  const [authLoading, setAuthLoading] = useState(false);
+  const isAuthenticated = !!tallerId;
 
   const getInitialView = () => {
     const v = urlParams.get('view');
-    if (!v) return 'landing'; // La raíz SIEMPRE es el portal de clientes
+    if (!v) return 'landing';
     
     if (v === 'landing') return 'landing';
     if (v === 'tracking') return 'tracking';
     if (v === 'register') return isAuthenticated ? 'dashboard' : 'register';
     
-    // Login y Rutas Secretas
     if (v === 'login' || v === 'diagtech-admin') {
       return isAuthenticated ? 'dashboard' : 'login';
     }
     
-    // Rutas internas del panel
     if (['dashboard', 'equipos', 'clientes', 'tecnicos', 'inventario'].includes(v)) {
       return isAuthenticated ? (v as any) : 'login';
     }
     
-    return 'landing'; // Fallback
+    return 'landing';
   };
 
   const [view, setView] = useState<'dashboard' | 'equipos' | 'clientes' | 'tecnicos' | 'inventario' | 'tracking' | 'login' | 'landing' | 'register'>(getInitialView());
@@ -128,13 +111,23 @@ function App() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
-    const { error } = await supabase.auth.signInWithPassword({
-      email: emailInput,
-      password: passwordInput,
-    });
-    if (error) {
+    setAuthLoading(true);
+    
+    // Consulta simple a la base de datos
+    const { data, error } = await supabase
+      .from('talleres')
+      .select('*')
+      .eq('email', emailInput)
+      .eq('password', passwordInput) // En un entorno real esto iría encriptado
+      .single();
+
+    setAuthLoading(false);
+
+    if (error || !data) {
       setAuthError('Correo o contraseña incorrectos.');
     } else {
+      localStorage.setItem('diagtech_taller_id', data.id);
+      setTallerId(data.id);
       setView('dashboard');
       window.history.pushState({}, '', '?view=dashboard');
     }
@@ -143,36 +136,36 @@ function App() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
-    // 1. Crear el usuario
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    setAuthLoading(true);
+
+    const { data, error: dbError } = await supabase.from('talleres').insert({
+      nombre: tallerNameInput,
       email: emailInput,
-      password: passwordInput,
-    });
-    
-    if (authError) {
-      setAuthError(authError.message);
+      password: passwordInput, // Guardado directo como lo solicitaste
+    }).select().single();
+
+    setAuthLoading(false);
+
+    if (dbError) {
+      console.error('Error creando taller:', dbError);
+      setAuthError('Error: ' + dbError.message);
       return;
     }
 
-    if (authData.user) {
-      // 2. Crear el registro del Taller en la base de datos
-      const { error: dbError } = await supabase.from('talleres').insert({
-        owner_id: authData.user.id,
-        nombre: tallerNameInput,
-      });
-      if (dbError) {
-        console.error('Error creando taller:', dbError);
-        alert('Error guardando tu taller en la base de datos: ' + dbError.message);
-      }
+    if (data) {
+      localStorage.setItem('diagtech_taller_id', data.id);
+      setTallerId(data.id);
       setView('dashboard');
       window.history.pushState({}, '', '?view=dashboard');
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    localStorage.removeItem('diagtech_taller_id');
+    setTallerId(null);
     setEmailInput('');
     setPasswordInput('');
+    setTallerNameInput('');
     setView('login');
     window.history.pushState({}, '', '?view=login');
   };
@@ -180,6 +173,14 @@ function App() {
   const handleNavClick = (v: typeof view) => {
     setView(v);
     setIsMobileMenuOpen(false);
+    
+    // Limpiar los formularios si vamos a las pantallas de entrada
+    if (v === 'login' || v === 'register' || v === 'landing') {
+      setEmailInput('');
+      setPasswordInput('');
+      setTallerNameInput('');
+      setAuthError('');
+    }
     
     // Cambiar la URL de forma limpia
     const url = new URL(window.location.href);
