@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { Ticket, Tecnico } from '../types';
-import { X, Plus, Eraser } from 'lucide-react';
+import { X, Plus, Eraser, User, Phone, Mail, MonitorSmartphone, Hash, Palette, Lock, ClipboardCheck, CheckCircle2, DollarSign, PenTool } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -179,7 +179,7 @@ export function NewTicketModal({ isOpen, onClose, onSave, tecnicos }: Props) {
             
             {/* SECCION: CLIENTE */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <h3 className="text-base font-bold text-brand-600 mb-4 flex items-center gap-2">1. Información del Cliente</h3>
+              <h3 className="text-base font-bold text-brand-600 mb-4 flex items-center gap-2"><User className="w-5 h-5" /> 1. Información del Cliente</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
@@ -190,11 +190,11 @@ export function NewTicketModal({ isOpen, onClose, onSave, tecnicos }: Props) {
                   <input required type="text" value={documento} onChange={e => setDocumento(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm border p-2.5 focus:ring-brand-500 focus:border-brand-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">📱 WhatsApp / Teléfono *</label>
+                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1"><Phone className="w-4 h-4" /> WhatsApp / Teléfono *</label>
                   <input required type="tel" value={telefono} onChange={e => setTelefono(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm border p-2.5 focus:ring-brand-500 focus:border-brand-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">✉️ Email (Opcional)</label>
+                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1"><Mail className="w-4 h-4" /> Email (Opcional)</label>
                   <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm border p-2.5 focus:ring-brand-500 focus:border-brand-500" placeholder="cliente@correo.com" />
                 </div>
               </div>
@@ -202,16 +202,16 @@ export function NewTicketModal({ isOpen, onClose, onSave, tecnicos }: Props) {
 
             {/* SECCION: EQUIPO */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <h3 className="text-base font-bold text-brand-600 mb-4 flex items-center gap-2">2. Detalle del Equipo</h3>
+              <h3 className="text-base font-bold text-brand-600 mb-4 flex items-center gap-2"><MonitorSmartphone className="w-5 h-5" /> 2. Detalle del Equipo</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
                   <select value={tipoEquipo} onChange={e => setTipoEquipo(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm border p-2.5 focus:ring-brand-500 focus:border-brand-500 bg-gray-50">
-                    <option value="Smartphone">📱 Smartphone</option>
-                    <option value="Laptop/PC">💻 Laptop/PC</option>
-                    <option value="Tablet">💊 Tablet</option>
-                    <option value="Consola">🎮 Consola</option>
-                    <option value="Otro">🔧 Otro</option>
+                    <option value="Smartphone">Smartphone</option>
+                    <option value="Laptop/PC">Laptop/PC</option>
+                    <option value="Tablet">Tablet</option>
+                    <option value="Consola">Consola</option>
+                    <option value="Otro">Otro</option>
                   </select>
                 </div>
                 <div>
@@ -226,15 +226,15 @@ export function NewTicketModal({ isOpen, onClose, onSave, tecnicos }: Props) {
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">🆔 IMEI / Serial</label>
+                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1"><Hash className="w-4 h-4" /> IMEI / Serial</label>
                   <input type="text" value={imei} onChange={e => setImei(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm border p-2.5 focus:ring-brand-500 focus:border-brand-500" placeholder="15 dígitos o serial..." />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">🎨 Color</label>
+                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1"><Palette className="w-4 h-4" /> Color</label>
                   <input type="text" value={color} onChange={e => setColor(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm border p-2.5 focus:ring-brand-500 focus:border-brand-500" placeholder="Ej. Negro Mate" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">🔐 Contraseña / PIN (Privado)</label>
+                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1"><Lock className="w-4 h-4" /> Contraseña / PIN (Privado)</label>
                   <input type="text" value={contrasena} onChange={e => setContrasena(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm border p-2.5 focus:ring-brand-500 focus:border-brand-500" placeholder="Ej. 1234 o Patrón Z" />
                 </div>
               </div>
@@ -248,11 +248,11 @@ export function NewTicketModal({ isOpen, onClose, onSave, tecnicos }: Props) {
             {/* SECCION: CHECKLIST */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base font-bold text-brand-600 flex items-center gap-2">3. Inspección de Recepción (Checklist)</h3>
+                <h3 className="text-base font-bold text-brand-600 flex items-center gap-2"><ClipboardCheck className="w-5 h-5" /> 3. Inspección de Recepción (Checklist)</h3>
                 <button type="button" onClick={() => setChecklist({
                   pantalla: 'OK', puertoCarga: 'OK', camaras: 'OK',
                   botones: 'OK', audio: 'OK', senal: 'OK', estetico: 'OK'
-                })} className="text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full hover:bg-green-100">✅ Marcar Todo OK</button>
+                })} className="text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full hover:bg-green-100 flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> Marcar Todo OK</button>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1 mb-6">
@@ -273,7 +273,7 @@ export function NewTicketModal({ isOpen, onClose, onSave, tecnicos }: Props) {
 
             {/* SECCION: FINANZAS Y GARANTIA */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <h3 className="text-base font-bold text-brand-600 mb-4 flex items-center gap-2">4. Finanzas y Condiciones</h3>
+              <h3 className="text-base font-bold text-brand-600 mb-4 flex items-center gap-2"><DollarSign className="w-5 h-5" /> 4. Finanzas y Condiciones</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Presupuesto / Total</label>
@@ -317,7 +317,7 @@ export function NewTicketModal({ isOpen, onClose, onSave, tecnicos }: Props) {
             {/* SECCION: FIRMA */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base font-bold text-brand-600 flex items-center gap-2">5. Firma de Conformidad</h3>
+                <h3 className="text-base font-bold text-brand-600 flex items-center gap-2"><PenTool className="w-5 h-5" /> 5. Firma de Conformidad</h3>
                 <button type="button" onClick={clearSignature} className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 font-medium bg-red-50 px-3 py-1.5 rounded-md">
                   <Eraser className="w-3 h-3" /> Borrar Firma
                 </button>
