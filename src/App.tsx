@@ -559,7 +559,12 @@ function App() {
         </div>
       </main>
 
-      <NewTicketModal isOpen={isNewModalOpen} onClose={() => setIsNewModalOpen(false)} onSave={handleAddTicket} />
+      <NewTicketModal 
+        isOpen={isNewModalOpen} 
+        onClose={() => setIsNewModalOpen(false)} 
+        onSave={handleAddTicket} 
+        tecnicos={tecnicos}
+      />
     </div>
   );
 }

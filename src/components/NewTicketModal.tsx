@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import type { Ticket } from '../types';
+import type { Ticket, Tecnico } from '../types';
 import { X } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSave: (ticket: Omit<Ticket, 'id' | 'fechaIngreso' | 'estado'>) => void;
+  tecnicos: Tecnico[];
 }
 
-export function NewTicketModal({ isOpen, onClose, onSave }: Props) {
+export function NewTicketModal({ isOpen, onClose, onSave, tecnicos }: Props) {
   const [nombre, setNombre] = useState('');
   const [documento, setDocumento] = useState('');
   const [telefono, setTelefono] = useState('');
@@ -26,10 +27,12 @@ export function NewTicketModal({ isOpen, onClose, onSave }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const techObj = tecnicos.find(t => t.id === tecnico);
+    
     onSave({
       cliente: { id: `CLI-TEMP`, nombre, documento, telefono, tipo: tipoCliente, email: '' },
       equipo: { tipo: tipoEquipo, modelo, falla },
-      tecnicoAsignado: tecnico ? { id: `T-TEMP`, nombre: tecnico } : undefined,
+      tecnicoAsignado: techObj ? { id: techObj.id, nombre: techObj.nombre } : undefined,
       finanzas: { costoTotal, abono }
     });
     // Limpiar form
@@ -98,15 +101,23 @@ export function NewTicketModal({ isOpen, onClose, onSave }: Props) {
 
           {/* Asignación */}
           <h3 className="text-sm font-medium text-gray-900 mb-4 pb-2 border-b">Asignación</h3>
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Técnico (Opcional)</label>
-            <select value={tecnico} onChange={e => setTecnico(e.target.value)} className="w-full md:w-1/2 rounded-md border-gray-300 shadow-sm border p-2 focus:ring-brand-500 focus:border-brand-500">
-              <option value="">-- Sin asignar --</option>
-              <option value="Roberto G.">Roberto G.</option>
-              <option value="Juan P.">Juan P.</option>
-              <option value="Laura M.">Laura M.</option>
-            </select>
-          </div>
+          {tecnicos.length > 0 && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Técnico (Opcional)</label>
+              <select value={tecnico} onChange={e => setTecnico(e.target.value)} className="w-full md:w-1/2 rounded-md border-gray-300 shadow-sm border p-2 focus:ring-brand-500 focus:border-brand-500">
+                <option value="">-- Sin asignar --</option>
+                {tecnicos.map(t => (
+                  <option key={t.id} value={t.id}>{t.nombre}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          
+          {tecnicos.length === 0 && (
+            <div className="mb-6 bg-blue-50 text-blue-700 p-3 rounded-lg text-sm flex items-center">
+              <span className="font-medium mr-2">Tip:</span> Para asignar equipos a técnicos, primero debes agregarlos en la sección "Técnicos" del panel izquierdo.
+            </div>
+          )}
 
           {/* Finanzas Iniciales */}
           <h3 className="text-sm font-medium text-gray-900 mb-4 pb-2 border-b">Finanzas (Opcional)</h3>
