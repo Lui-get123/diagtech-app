@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, MonitorSmartphone, Users, Wrench, PlusCircle, Cpu, Package, Globe, Menu, X 
 } from 'lucide-react';
@@ -22,10 +22,32 @@ function App() {
   const initialView = (urlParams.get('view') as any) || 'dashboard';
 
   const [view, setView] = useState<'dashboard' | 'equipos' | 'clientes' | 'tecnicos' | 'inventario' | 'tracking'>(initialView);
-  const [tickets, setTickets] = useState<Ticket[]>(initialTickets);
-  const [tecnicos, setTecnicos] = useState<Tecnico[]>(initialTecnicos);
-  const [clientes, setClientes] = useState<Cliente[]>(initialClientes);
-  const [inventario, setInventario] = useState<Repuesto[]>(initialInventario);
+  
+  const [tickets, setTickets] = useState<Ticket[]>(() => {
+    const saved = localStorage.getItem('diagtech_tickets');
+    return saved ? JSON.parse(saved) : initialTickets;
+  });
+  
+  const [tecnicos, setTecnicos] = useState<Tecnico[]>(() => {
+    const saved = localStorage.getItem('diagtech_tecnicos');
+    return saved ? JSON.parse(saved) : initialTecnicos;
+  });
+  
+  const [clientes, setClientes] = useState<Cliente[]>(() => {
+    const saved = localStorage.getItem('diagtech_clientes');
+    return saved ? JSON.parse(saved) : initialClientes;
+  });
+  
+  const [inventario, setInventario] = useState<Repuesto[]>(() => {
+    const saved = localStorage.getItem('diagtech_inventario');
+    return saved ? JSON.parse(saved) : initialInventario;
+  });
+
+  // Guardar en localStorage cada vez que cambien los datos
+  useEffect(() => { localStorage.setItem('diagtech_tickets', JSON.stringify(tickets)); }, [tickets]);
+  useEffect(() => { localStorage.setItem('diagtech_tecnicos', JSON.stringify(tecnicos)); }, [tecnicos]);
+  useEffect(() => { localStorage.setItem('diagtech_clientes', JSON.stringify(clientes)); }, [clientes]);
+  useEffect(() => { localStorage.setItem('diagtech_inventario', JSON.stringify(inventario)); }, [inventario]);
   
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
