@@ -119,8 +119,8 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('diagtech_auth');
     setIsAuthenticated(false);
-    setView('tracking');
-    window.history.pushState({}, '', '?view=tracking');
+    setView('login');
+    window.history.pushState({}, '', '?view=login');
   };
 
   const handleNavClick = (v: typeof view) => {
