@@ -129,7 +129,9 @@ function App() {
     
     // Cambiar la URL de forma limpia
     const url = new URL(window.location.href);
-    if (v === 'tracking') {
+    if (v === 'landing') {
+      url.search = ''; // Limpiar toda la URL para la portada
+    } else if (v === 'tracking') {
       url.searchParams.set('view', 'tracking');
     } else {
       url.searchParams.set('view', v);
