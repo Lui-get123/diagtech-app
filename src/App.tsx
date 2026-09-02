@@ -11,23 +11,11 @@ import { TecnicosView } from './views/TecnicosView';
 import { InventarioView } from './views/InventarioView';
 import { TrackingView } from './views/TrackingView';
 
-// Datos Iniciales (Mock)
-const initialTickets: Ticket[] = [
-  { id: 'TK-1042', cliente: { id: 'C1', nombre: 'Carlos Mendoza', documento: '1098765432', telefono: '+57 300 123 4567', tipo: 'Particular', email: 'carlos@mail.com' }, equipo: { tipo: 'Laptop/PC', modelo: 'MacBook Pro M1', falla: 'Fallo en encendido' }, tecnicoAsignado: { id: 'T1', nombre: 'Roberto G.' }, estado: 'Diagnosticando', fechaIngreso: new Date().toISOString() },
-  { id: 'TK-1041', cliente: { id: 'C2', nombre: 'LogisTech S.A.', documento: '900123456-7', telefono: 'Empresa', tipo: 'Empresa', email: 'contacto@logistech.com' }, equipo: { tipo: 'Laptop/PC', modelo: 'PC Armada', falla: 'Mantenimiento preventivo' }, tecnicoAsignado: { id: 'T2', nombre: 'Juan P.' }, estado: 'En Reparación', fechaIngreso: new Date(Date.now() - 86400000).toISOString() }
-];
-const initialTecnicos: Tecnico[] = [
-  { id: 'T1', nombre: 'Roberto G.', documento: '11223344', especialidad: 'Apple y Laptops', telefono: '3001112233' },
-  { id: 'T2', nombre: 'Juan P.', documento: '55667788', especialidad: 'PC Gamer y Hardware', telefono: '3004445566' },
-];
-const initialClientes: Cliente[] = [
-  { id: 'C1', nombre: 'Carlos Mendoza', documento: '1098765432', telefono: '+57 300 123 4567', tipo: 'Particular', email: 'carlos@mail.com' },
-  { id: 'C2', nombre: 'LogisTech S.A.', documento: '900123456-7', telefono: '3110000000', tipo: 'Empresa', email: 'contacto@logistech.com' },
-];
-const initialInventario: Repuesto[] = [
-  { id: 'R1', nombre: 'Pantalla iPhone 13 Pro', categoria: 'Pantallas', stock: 5, precioVenta: 180000 },
-  { id: 'R2', nombre: 'Batería genérica Laptop', categoria: 'Baterías', stock: 1, precioVenta: 85000 },
-];
+// Datos Iniciales (Limpios para producción/pruebas reales)
+const initialTickets: Ticket[] = [];
+const initialTecnicos: Tecnico[] = [];
+const initialClientes: Cliente[] = [];
+const initialInventario: Repuesto[] = [];
 
 function App() {
   const [view, setView] = useState<'dashboard' | 'equipos' | 'clientes' | 'tecnicos' | 'inventario' | 'tracking'>('dashboard');
