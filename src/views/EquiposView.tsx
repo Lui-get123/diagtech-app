@@ -63,91 +63,149 @@ export function EquiposView({ tickets, onDeleteTicket }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredTickets.map(t => (
-          <div key={t.id} className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col ${printingId === t.id ? 'print-only-this' : ''} ${printingId && printingId !== t.id ? 'hidden print:hidden' : ''}`}>
+          <div key={t.id} className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col ${printingId === t.id ? 'print-only-this !p-0 !border-0 !shadow-none' : ''} ${printingId && printingId !== t.id ? 'hidden print:hidden' : ''}`}>
             
-            {/* Cabecera del ticket impresa */}
+            {/* ---------------- RECIBO DE IMPRESIÓN (DISEÑO EXACTO) ---------------- */}
             {printingId === t.id && (
-              <div className="hidden print:block text-center mb-8 border-b-2 border-black pb-4">
-                <h1 className="text-2xl font-bold uppercase">Ticket de Reparación</h1>
-                <p className="text-lg font-mono mt-2">{t.id}</p>
-                <p className="text-sm mt-1">{new Date(t.fechaIngreso).toLocaleDateString()}</p>
+              <div className="hidden print:block font-mono text-black w-full max-w-lg mx-auto p-8">
+                <h1 className="text-3xl font-bold text-center mb-6 tracking-widest">TALLER DE CASA</h1>
+                
+                <hr className="border-t-2 border-dashed border-gray-300 mb-6" />
+                
+                <div className="flex justify-between text-sm mb-6 font-bold leading-loose">
+                  <div className="flex flex-col">
+                    <span>FOLIO:</span>
+                    <span>FECHA:</span>
+                    <span>TÉCNICO:</span>
+                  </div>
+                  <div className="flex flex-col text-right">
+                    <span>{t.id}</span>
+                    <span>{new Date(t.fechaIngreso).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase().replace(/ /g, '/')}</span>
+                    <span>{t.tecnicoAsignado ? t.tecnicoAsignado.nombre.toUpperCase() : 'TÉCNICO ASIGNADO'}</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 border-[3px] border-blue-400 rounded-xl p-5 mb-8">
+                  <h2 className="text-blue-500 font-bold mb-3 tracking-wider">EQUIPO PARA REPARACIÓN</h2>
+                  <div className="text-sm leading-relaxed mb-4 font-semibold">
+                    <p>Cliente: {t.cliente.nombre}</p>
+                    <p>Tel: {t.cliente.telefono}</p>
+                    <p>Email: {t.cliente.email}</p>
+                    <p>ID: {t.cliente.documento}</p>
+                    <p>Equipo: {t.equipo.modelo}</p>
+                    <p>Falla: {t.equipo.falla}</p>
+                  </div>
+
+                  <hr className="border-t-2 border-dashed border-gray-300 my-4" />
+
+                  <h2 className="text-slate-400 font-bold mb-3">INSPECCIÓN RECEPCIÓN:</h2>
+                  <div className="text-sm leading-relaxed font-semibold">
+                    <div className="flex justify-between"><p>Pantalla/Touch:</p><span>✓ OK</span></div>
+                    <div className="flex justify-between"><p>Pto. Carga:</p><span>✓ OK</span></div>
+                    <div className="flex justify-between"><p>Cámaras:</p><span>✓ OK</span></div>
+                    <div className="flex justify-between"><p>Botones:</p><span>✗ Falla</span></div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between font-bold text-lg border-b-2 border-black pb-2 mb-4">
+                  <span>Descripción</span>
+                  <span>Total</span>
+                </div>
+
+                <div className="flex justify-between font-bold mb-8">
+                  <span>{t.equipo.falla}</span>
+                  <span>${(t.finanzas?.costoTotal || 0).toFixed(2)}</span>
+                </div>
+
+                <hr className="border-t-4 border-black mb-4" />
+
+                <div className="flex justify-between font-black text-2xl mb-12">
+                  <span>TOTAL:</span>
+                  <span>MXN ${(t.finanzas?.costoTotal || 0).toFixed(2)}</span>
+                </div>
+
+                <div className="border border-gray-200 bg-gray-50 text-center py-4 text-xs font-bold text-gray-500">
+                  TÉRMINOS
+                </div>
               </div>
             )}
 
-            <div className="p-5 border-b border-gray-100 flex justify-between items-start bg-gray-50/50 relative">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-brand-100 rounded-lg text-brand-600 print:hidden">
-                  <MonitorSmartphone className="w-6 h-6" />
+            {/* ---------------- TARJETA NORMAL (OCULTA EN IMPRESIÓN) ---------------- */}
+            <div className="print:hidden flex flex-col h-full">
+              <div className="p-5 border-b border-gray-100 flex justify-between items-start bg-gray-50/50 relative">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-brand-100 rounded-lg text-brand-600">
+                    <MonitorSmartphone className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 pr-8 text-lg">{t.equipo.modelo}</h3>
+                    <p className="text-xs text-gray-500 font-mono mt-0.5">{t.id}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 pr-8 text-lg print:text-xl">{t.equipo.modelo}</h3>
-                  <p className="text-xs text-gray-500 font-mono mt-0.5 print:hidden">{t.id}</p>
-                  <p className="text-sm text-gray-600 hidden print:block mt-1">Tipo: {t.equipo.tipo}</p>
+                <div className="flex flex-col items-end gap-2">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    {t.estado}
+                  </span>
+                  <div className="flex gap-1 mt-2">
+                    <button 
+                      onClick={() => handleWhatsApp(t)} 
+                      className="text-gray-400 hover:text-green-600 hover:bg-green-50 p-1.5 rounded-md transition-colors"
+                      title="Notificar por WhatsApp"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => handlePrint(t.id)} 
+                      className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded-md transition-colors"
+                      title="Imprimir Recibo"
+                    >
+                      <Printer className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => onDeleteTicket?.(t.id)} 
+                      className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-md transition-colors"
+                      title="Eliminar Ticket"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-2 print:hidden">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+
+              <div className="p-5 flex-1 space-y-4">
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1 mb-1"><FileText className="w-3 h-3"/> Falla Reportada</h4>
+                  <p className="text-sm text-gray-800 bg-red-50 p-2 rounded border border-red-100">{t.equipo.falla}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1 mb-1"><User className="w-3 h-3"/> Cliente</h4>
+                    <p className="text-sm text-gray-900 font-medium truncate">{t.cliente.nombre}</p>
+                    <p className="text-xs text-gray-500">{t.cliente.documento}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1 mb-1"><Wrench className="w-3 h-3"/> Finanzas</h4>
+                    {t.finanzas && t.finanzas.costoTotal > 0 ? (
+                      t.finanzas.costoTotal - t.finanzas.abono <= 0 ? (
+                        <span className="text-xs font-semibold text-green-700 bg-green-50 px-2 py-1 rounded border border-green-200">Pagado</span>
+                      ) : (
+                        <p className="text-sm font-semibold text-red-600">Debe: ${(t.finanzas.costoTotal - t.finanzas.abono).toLocaleString()}</p>
+                      )
+                    ) : <span className="text-gray-400 italic text-sm">Sin costear</span>}
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+                <div className="flex items-center text-xs text-gray-500 gap-1">
+                  <Calendar className="w-4 h-4" />
+                  {new Date(t.fechaIngreso).toLocaleDateString()}
+                </div>
+                <span className="text-xs font-semibold text-brand-700 bg-brand-100 px-2 py-1 rounded-full border border-brand-200">
                   {t.estado}
                 </span>
-                <div className="flex gap-1 mt-2">
-                  <button 
-                    onClick={() => handleWhatsApp(t)} 
-                    className="text-gray-400 hover:text-green-600 hover:bg-green-50 p-1.5 rounded-md transition-colors"
-                    title="Notificar por WhatsApp"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => handlePrint(t.id)} 
-                    className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded-md transition-colors"
-                    title="Imprimir Recibo"
-                  >
-                    <Printer className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => onDeleteTicket?.(t.id)} 
-                    className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-md transition-colors"
-                    title="Eliminar Ticket"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
               </div>
-            </div>
-
-            <div className="p-5 flex-1 space-y-4">
-              <div>
-                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1 mb-1"><FileText className="w-3 h-3"/> Falla Reportada</h4>
-                <p className="text-sm text-gray-800 bg-red-50 p-2 rounded border border-red-100">{t.equipo.falla}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1 mb-1"><User className="w-3 h-3"/> Cliente</h4>
-                  <p className="text-sm text-gray-900 font-medium truncate">{t.cliente.nombre}</p>
-                  <p className="text-xs text-gray-500">{t.cliente.documento}</p>
-                </div>
-                <div>
-                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1 mb-1"><Wrench className="w-3 h-3"/> Finanzas</h4>
-                  {t.finanzas && t.finanzas.costoTotal > 0 ? (
-                    t.finanzas.costoTotal - t.finanzas.abono <= 0 ? (
-                      <span className="text-xs font-semibold text-green-700 bg-green-50 px-2 py-1 rounded border border-green-200">Pagado</span>
-                    ) : (
-                      <p className="text-sm font-semibold text-red-600">Debe: ${(t.finanzas.costoTotal - t.finanzas.abono).toLocaleString()}</p>
-                    )
-                  ) : <span className="text-gray-400 italic text-sm">Sin costear</span>}
-                </div>
-              </div>
-            </div>
-
-            <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
-              <div className="flex items-center text-xs text-gray-500 gap-1">
-                <Calendar className="w-4 h-4" />
-                {new Date(t.fechaIngreso).toLocaleDateString()}
-              </div>
-              <span className="text-xs font-semibold text-brand-700 bg-brand-100 px-2 py-1 rounded-full border border-brand-200">
-                {t.estado}
-              </span>
             </div>
           </div>
         ))}
