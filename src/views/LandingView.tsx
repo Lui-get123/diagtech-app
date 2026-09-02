@@ -1,7 +1,7 @@
-import { Cpu, ArrowRight, CheckCircle2, MonitorSmartphone, DollarSign, Package } from 'lucide-react';
+import { Cpu, ArrowRight, MonitorSmartphone, DollarSign, Package } from 'lucide-react';
 
 interface Props {
-  onNavigate: (view: string) => void;
+  onNavigate: (view: any) => void;
 }
 
 export function LandingView({ onNavigate }: Props) {
