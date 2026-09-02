@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import type { Ticket } from '../types';
-import { MonitorSmartphone, Calendar, User, FileText, Wrench, Trash2 } from 'lucide-react';
+import { MonitorSmartphone, Calendar, User, FileText, Wrench, Trash2, Printer } from 'lucide-react';
 
 interface Props {
   tickets: Ticket[];
@@ -7,6 +8,16 @@ interface Props {
 }
 
 export function EquiposView({ tickets, onDeleteTicket }: Props) {
+  const [printingId, setPrintingId] = useState<string | null>(null);
+
+  const handlePrint = (id: string) => {
+    setPrintingId(id);
+    setTimeout(() => {
+      window.print();
+      setPrintingId(null);
+    }, 100);
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">
       <div className="mb-6">
@@ -16,28 +27,48 @@ export function EquiposView({ tickets, onDeleteTicket }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {tickets.map(t => (
-          <div key={t.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+          <div key={t.id} className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col ${printingId === t.id ? 'print-only-this' : ''} ${printingId && printingId !== t.id ? 'hidden print:hidden' : ''}`}>
+            
+            {/* Cabecera del ticket impresa */}
+            {printingId === t.id && (
+              <div className="hidden print:block text-center mb-8 border-b-2 border-black pb-4">
+                <h1 className="text-2xl font-bold uppercase">Ticket de Reparación</h1>
+                <p className="text-lg font-mono mt-2">{t.id}</p>
+                <p className="text-sm mt-1">{new Date(t.fechaIngreso).toLocaleDateString()}</p>
+              </div>
+            )}
+
             <div className="p-5 border-b border-gray-100 flex justify-between items-start bg-gray-50/50 relative">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-brand-100 rounded-lg text-brand-600">
+                <div className="p-2 bg-brand-100 rounded-lg text-brand-600 print:hidden">
                   <MonitorSmartphone className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900 pr-8">{t.equipo.modelo}</h3>
-                  <p className="text-xs text-gray-500 font-mono mt-0.5">{t.id}</p>
+                  <h3 className="font-bold text-gray-900 pr-8 text-lg print:text-xl">{t.equipo.modelo}</h3>
+                  <p className="text-xs text-gray-500 font-mono mt-0.5 print:hidden">{t.id}</p>
+                  <p className="text-sm text-gray-600 hidden print:block mt-1">Tipo: {t.equipo.tipo}</p>
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-2">
+              <div className="flex flex-col items-end gap-2 print:hidden">
                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                   {t.estado}
                 </span>
-                <button 
-                  onClick={() => onDeleteTicket?.(t.id)} 
-                  className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-md transition-colors"
-                  title="Eliminar Ticket"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex gap-1">
+                  <button 
+                    onClick={() => handlePrint(t.id)} 
+                    className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded-md transition-colors"
+                    title="Imprimir Recibo"
+                  >
+                    <Printer className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => onDeleteTicket?.(t.id)} 
+                    className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-md transition-colors"
+                    title="Eliminar Ticket"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
 
