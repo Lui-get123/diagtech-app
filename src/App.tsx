@@ -162,6 +162,7 @@ function App() {
       });
       if (dbError) {
         console.error('Error creando taller:', dbError);
+        alert('Error guardando tu taller en la base de datos: ' + dbError.message);
       }
       setView('dashboard');
       window.history.pushState({}, '', '?view=dashboard');
