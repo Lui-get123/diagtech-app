@@ -1,0 +1,167 @@
+import { useState } from 'react';
+import { 
+  LayoutDashboard, MonitorSmartphone, Users, Wrench, PlusCircle, Cpu, Package, Globe 
+} from 'lucide-react';
+import type { Ticket, TicketStatus, Cliente, Tecnico, Repuesto } from './types';
+import { NewTicketModal } from './components/NewTicketModal';
+import { DashboardView } from './views/DashboardView';
+import { EquiposView } from './views/EquiposView';
+import { ClientesView } from './views/ClientesView';
+import { TecnicosView } from './views/TecnicosView';
+import { InventarioView } from './views/InventarioView';
+import { TrackingView } from './views/TrackingView';
+
+// Datos Iniciales (Mock)
+const initialTickets: Ticket[] = [
+  { id: 'TK-1042', cliente: { id: 'C1', nombre: 'Carlos Mendoza', documento: '1098765432', telefono: '+57 300 123 4567', tipo: 'Particular', email: 'carlos@mail.com' }, equipo: { tipo: 'Laptop/PC', modelo: 'MacBook Pro M1', falla: 'Fallo en encendido' }, tecnicoAsignado: { id: 'T1', nombre: 'Roberto G.' }, estado: 'Diagnosticando', fechaIngreso: new Date().toISOString() },
+  { id: 'TK-1041', cliente: { id: 'C2', nombre: 'LogisTech S.A.', documento: '900123456-7', telefono: 'Empresa', tipo: 'Empresa', email: 'contacto@logistech.com' }, equipo: { tipo: 'Laptop/PC', modelo: 'PC Armada', falla: 'Mantenimiento preventivo' }, tecnicoAsignado: { id: 'T2', nombre: 'Juan P.' }, estado: 'En Reparación', fechaIngreso: new Date(Date.now() - 86400000).toISOString() }
+];
+const initialTecnicos: Tecnico[] = [
+  { id: 'T1', nombre: 'Roberto G.', documento: '11223344', especialidad: 'Apple y Laptops', telefono: '3001112233' },
+  { id: 'T2', nombre: 'Juan P.', documento: '55667788', especialidad: 'PC Gamer y Hardware', telefono: '3004445566' },
+];
+const initialClientes: Cliente[] = [
+  { id: 'C1', nombre: 'Carlos Mendoza', documento: '1098765432', telefono: '+57 300 123 4567', tipo: 'Particular', email: 'carlos@mail.com' },
+  { id: 'C2', nombre: 'LogisTech S.A.', documento: '900123456-7', telefono: '3110000000', tipo: 'Empresa', email: 'contacto@logistech.com' },
+];
+const initialInventario: Repuesto[] = [
+  { id: 'R1', nombre: 'Pantalla iPhone 13 Pro', categoria: 'Pantallas', stock: 5, precioVenta: 180000 },
+  { id: 'R2', nombre: 'Batería genérica Laptop', categoria: 'Baterías', stock: 1, precioVenta: 85000 },
+];
+
+function App() {
+  const [view, setView] = useState<'dashboard' | 'equipos' | 'clientes' | 'tecnicos' | 'inventario' | 'tracking'>('dashboard');
+  const [tickets, setTickets] = useState<Ticket[]>(initialTickets);
+  const [tecnicos, setTecnicos] = useState<Tecnico[]>(initialTecnicos);
+  const [clientes, setClientes] = useState<Cliente[]>(initialClientes);
+  const [inventario, setInventario] = useState<Repuesto[]>(initialInventario);
+  
+  const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+  const [highlightedCliente, setHighlightedCliente] = useState<string | null>(null);
+  const [clienteSearchTerm, setClienteSearchTerm] = useState('');
+
+  const handleGoToCliente = (documento: string) => {
+    setView('clientes');
+    setClienteSearchTerm(documento);
+    setHighlightedCliente(documento);
+    // Remover el highlight después de 3 segundos para que no se quede pegado siempre
+    setTimeout(() => setHighlightedCliente(null), 3000);
+  };
+
+  const handleAddTicket = (data: Omit<Ticket, 'id' | 'fechaIngreso' | 'estado'>) => {
+    const nextIdNumber = tickets.length > 0 ? Math.max(...tickets.map(t => parseInt(t.id.split('-')[1]))) + 1 : 1000;
+    const newTicket: Ticket = { ...data, id: `TK-${nextIdNumber}`, estado: 'Ingresado', fechaIngreso: new Date().toISOString() };
+    setTickets([newTicket, ...tickets]);
+    
+    // Si es un cliente nuevo, agregarlo a la BD local
+    if (!clientes.find(c => c.documento === data.cliente.documento)) {
+      setClientes([...clientes, { ...data.cliente, id: `CLI-${Date.now()}`, email: '' }]);
+    }
+  };
+
+  const handleUpdateStatus = (id: string, newStatus: TicketStatus, finanzas?: { costoTotal: number; abono: number }, repuestosUsados?: string[]) => {
+    setTickets(tickets.map(t => t.id === id ? { 
+      ...t, 
+      estado: newStatus, 
+      ...(finanzas ? { finanzas } : {}) 
+    } : t));
+
+    if (repuestosUsados && repuestosUsados.length > 0) {
+      setInventario(prev => prev.map(r => 
+        repuestosUsados.includes(r.id) ? { ...r, stock: Math.max(0, r.stock - 1) } : r
+      ));
+    }
+  };
+
+  // Titulo dinamico del Header
+  const headerTitles = {
+    dashboard: 'Resumen de Operaciones',
+    equipos: 'Catálogo de Equipos',
+    clientes: 'Directorio de Clientes',
+    tecnicos: 'Gestión de Técnicos',
+    inventario: 'Control de Inventario',
+    tracking: 'Portal de Seguimiento'
+  };
+
+  // Render especial sin barra lateral para simular la web del cliente
+  if (view === 'tracking') {
+    return (
+      <div className="relative">
+        <button 
+          onClick={() => setView('dashboard')} 
+          className="absolute top-4 left-4 z-50 bg-gray-900/80 hover:bg-gray-900 text-white px-4 py-2 rounded-lg font-medium shadow-lg flex items-center backdrop-blur"
+        >
+          ← Volver a DiagTech Admin
+        </button>
+        <TrackingView tickets={tickets} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
+      {/* Sidebar */}
+      <aside className="w-64 bg-gray-900 flex-col hidden md:flex">
+        <div className="h-16 flex items-center px-6 bg-gray-900 border-b border-gray-800">
+          <Cpu className="h-7 w-7 text-brand-500 mr-2" />
+          <span className="text-white text-lg font-bold tracking-wide">Diag<span className="text-brand-500">Tech</span></span>
+        </div>
+        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+          <button onClick={() => setView('dashboard')} className={`w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${view === 'dashboard' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+            <LayoutDashboard className={`h-5 w-5 mr-3 ${view === 'dashboard' ? 'text-gray-300' : 'text-gray-400 group-hover:text-white'}`} /> Dashboard
+          </button>
+          <button onClick={() => setView('equipos')} className={`w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${view === 'equipos' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+            <MonitorSmartphone className={`h-5 w-5 mr-3 ${view === 'equipos' ? 'text-gray-300' : 'text-gray-400 group-hover:text-white'}`} /> Equipos
+          </button>
+          <button onClick={() => setView('clientes')} className={`w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${view === 'clientes' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+            <Users className={`h-5 w-5 mr-3 ${view === 'clientes' ? 'text-gray-300' : 'text-gray-400 group-hover:text-white'}`} /> Clientes
+          </button>
+          <button onClick={() => setView('tecnicos')} className={`w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${view === 'tecnicos' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+            <Wrench className={`h-5 w-5 mr-3 ${view === 'tecnicos' ? 'text-gray-300' : 'text-gray-400 group-hover:text-white'}`} /> Técnicos
+          </button>
+          <button onClick={() => setView('inventario')} className={`w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${view === 'inventario' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+            <Package className={`h-5 w-5 mr-3 ${view === 'inventario' ? 'text-gray-300' : 'text-gray-400 group-hover:text-white'}`} /> Inventario
+          </button>
+        </nav>
+        
+        {/* Enlace al Portal Publico */}
+        <div className="p-4 bg-gray-900 border-t border-gray-800">
+          <button 
+            onClick={() => setView('tracking')} 
+            className="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-brand-600 text-gray-300 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors border border-gray-700 hover:border-brand-500"
+          >
+            <Globe className="w-4 h-4" /> Ver Portal del Cliente
+          </button>
+        </div>
+      </aside>
+
+      <main className="flex-1 flex flex-col overflow-hidden">
+        {/* Topbar */}
+        <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0">
+          <div className="flex items-center flex-1">
+            <h1 className="text-xl font-semibold text-gray-900">{headerTitles[view]}</h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={() => setIsNewModalOpen(true)}
+              className="inline-flex items-center gap-x-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-700"
+            >
+              <PlusCircle className="h-5 w-5" /> Nuevo Ingreso
+            </button>
+          </div>
+        </header>
+
+        {/* Content routing */}
+        {view === 'dashboard' && <DashboardView tickets={tickets} inventario={inventario} onUpdateStatus={handleUpdateStatus} onClientClick={handleGoToCliente} />}
+        {view === 'equipos' && <EquiposView tickets={tickets} />}
+        {view === 'clientes' && <ClientesView clientes={clientes} tickets={tickets} onAddCliente={(c) => setClientes([...clientes, c])} searchTerm={clienteSearchTerm} setSearchTerm={setClienteSearchTerm} highlightedCliente={highlightedCliente} />}
+        {view === 'tecnicos' && <TecnicosView tecnicos={tecnicos} onAddTecnico={(t) => setTecnicos([...tecnicos, t])} />}
+        {view === 'inventario' && <InventarioView inventario={inventario} onAddRepuesto={(r) => setInventario([...inventario, r])} onAddRepuestosBulk={(nuevos) => setInventario([...inventario, ...nuevos])} />}
+      </main>
+
+      <NewTicketModal isOpen={isNewModalOpen} onClose={() => setIsNewModalOpen(false)} onSave={handleAddTicket} />
+    </div>
+  );
+}
+
+export default App;

@@ -1,0 +1,79 @@
+import type { Ticket } from '../types';
+import { MonitorSmartphone, Calendar, User, FileText, Wrench } from 'lucide-react';
+
+interface Props {
+  tickets: Ticket[];
+}
+
+export function EquiposView({ tickets }: Props) {
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-gray-900">Catálogo de Equipos en el Taller</h2>
+        <p className="text-sm text-gray-500 mt-1">Vista detallada de todos los equipos ingresados.</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {tickets.map(t => (
+          <div key={t.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+            <div className="p-5 border-b border-gray-100 flex justify-between items-start bg-gray-50/50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-brand-100 rounded-lg text-brand-600">
+                  <MonitorSmartphone className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">{t.equipo.modelo}</h3>
+                  <p className="text-xs text-gray-500">{t.equipo.tipo}</p>
+                </div>
+              </div>
+              <span className="text-xs font-mono font-bold bg-gray-200 text-gray-700 px-2 py-1 rounded">
+                {t.id}
+              </span>
+            </div>
+
+            <div className="p-5 flex-1 space-y-4">
+              <div>
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1 mb-1"><FileText className="w-3 h-3"/> Falla Reportada</h4>
+                <p className="text-sm text-gray-800 bg-red-50 p-2 rounded border border-red-100">{t.equipo.falla}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1 mb-1"><User className="w-3 h-3"/> Cliente</h4>
+                  <p className="text-sm text-gray-900 font-medium truncate">{t.cliente.nombre}</p>
+                  <p className="text-xs text-gray-500">{t.cliente.documento}</p>
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1 mb-1"><Wrench className="w-3 h-3"/> Finanzas</h4>
+                  {t.finanzas && t.finanzas.costoTotal > 0 ? (
+                    t.finanzas.costoTotal - t.finanzas.abono <= 0 ? (
+                      <span className="text-xs font-semibold text-green-700 bg-green-50 px-2 py-1 rounded border border-green-200">Pagado</span>
+                    ) : (
+                      <p className="text-sm font-semibold text-red-600">Debe: ${(t.finanzas.costoTotal - t.finanzas.abono).toLocaleString()}</p>
+                    )
+                  ) : <span className="text-gray-400 italic text-sm">Sin costear</span>}
+                </div>
+              </div>
+            </div>
+
+            <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+              <div className="flex items-center text-xs text-gray-500 gap-1">
+                <Calendar className="w-4 h-4" />
+                {new Date(t.fechaIngreso).toLocaleDateString()}
+              </div>
+              <span className="text-xs font-semibold text-brand-700 bg-brand-100 px-2 py-1 rounded-full border border-brand-200">
+                {t.estado}
+              </span>
+            </div>
+          </div>
+        ))}
+
+        {tickets.length === 0 && (
+          <div className="col-span-full py-12 text-center text-gray-500">
+            No hay equipos registrados en el sistema.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
