@@ -11,6 +11,8 @@ import { TecnicosView } from './views/TecnicosView';
 import { InventarioView } from './views/InventarioView';
 import { TrackingView } from './views/TrackingView';
 import { LandingView } from './views/LandingView';
+import { supabase } from './lib/supabase';
+import type { Session } from '@supabase/supabase-js';
 
 // Datos Iniciales (Limpios para producción/pruebas reales)
 const initialTickets: Ticket[] = [];
@@ -21,18 +23,35 @@ const initialInventario: Repuesto[] = [];
 function App() {
   const urlParams = new URLSearchParams(window.location.search);
   
-  // Autenticación básica
-  const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('diagtech_auth') === 'true');
+  // Autenticación Real con Supabase
+  const [session, setSession] = useState<Session | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const isAuthenticated = !!session;
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const getInitialView = () => {
     const v = urlParams.get('view');
-    if (!v) return 'landing'; // Ahora la raíz es la Landing Page
+    if (!v) return 'landing'; // La raíz SIEMPRE es el portal de clientes
     
     if (v === 'landing') return 'landing';
     if (v === 'tracking') return 'tracking';
-    if (v === 'register') return 'register';
+    if (v === 'register') return isAuthenticated ? 'dashboard' : 'register';
     
-    // Login
+    // Login y Rutas Secretas
     if (v === 'login' || v === 'diagtech-admin') {
       return isAuthenticated ? 'dashboard' : 'login';
     }
@@ -47,6 +66,12 @@ function App() {
 
   const [view, setView] = useState<'dashboard' | 'equipos' | 'clientes' | 'tecnicos' | 'inventario' | 'tracking' | 'login' | 'landing' | 'register'>(getInitialView());
   
+  // Estados de formularios de Auth
+  const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [tallerNameInput, setTallerNameInput] = useState('');
+  const [authError, setAuthError] = useState('');
+
   const [tickets, setTickets] = useState<Ticket[]>(() => {
     const saved = localStorage.getItem('diagtech_tickets');
     return saved ? JSON.parse(saved) : initialTickets;
@@ -82,7 +107,7 @@ function App() {
       let nextView = 'landing';
       if (!v || v === 'landing') nextView = 'landing';
       else if (v === 'tracking') nextView = 'tracking';
-      else if (v === 'register') nextView = 'register';
+      else if (v === 'register') nextView = isAuthenticated ? 'dashboard' : 'register';
       else if (v === 'login' || v === 'diagtech-admin') nextView = isAuthenticated ? 'dashboard' : 'login';
       else if (['dashboard', 'equipos', 'clientes', 'tecnicos', 'inventario'].includes(v)) {
         nextView = isAuthenticated ? v : 'login';
@@ -100,25 +125,52 @@ function App() {
   const [highlightedCliente, setHighlightedCliente] = useState<string | null>(null);
   const [clienteSearchTerm, setClienteSearchTerm] = useState('');
   
-  const [passwordInput, setPasswordInput] = useState('');
-  const ADMIN_PASSWORD = 'admin'; // Contraseña por defecto
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput === ADMIN_PASSWORD) {
-      localStorage.setItem('diagtech_auth', 'true');
-      setIsAuthenticated(true);
+    setAuthError('');
+    const { error } = await supabase.auth.signInWithPassword({
+      email: emailInput,
+      password: passwordInput,
+    });
+    if (error) {
+      setAuthError('Correo o contraseña incorrectos.');
+    } else {
       setView('dashboard');
       window.history.pushState({}, '', '?view=dashboard');
-    } else {
-      alert('Contraseña incorrecta. Acceso denegado.');
-      setPasswordInput('');
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('diagtech_auth');
-    setIsAuthenticated(false);
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    // 1. Crear el usuario
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: emailInput,
+      password: passwordInput,
+    });
+    
+    if (authError) {
+      setAuthError(authError.message);
+      return;
+    }
+
+    if (authData.user) {
+      // 2. Crear el registro del Taller en la base de datos
+      const { error: dbError } = await supabase.from('talleres').insert({
+        owner_id: authData.user.id,
+        nombre: tallerNameInput,
+      });
+      if (dbError) {
+        console.error('Error creando taller:', dbError);
+      }
+      setView('dashboard');
+      window.history.pushState({}, '', '?view=dashboard');
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setEmailInput('');
     setPasswordInput('');
     setView('login');
     window.history.pushState({}, '', '?view=login');
@@ -204,11 +256,38 @@ function App() {
           <p className="mt-2 text-sm text-gray-600">Únete a cientos de talleres organizados</p>
         </div>
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-200 text-center">
-            <p className="text-gray-600 mb-6">Para continuar y conectar el sistema a la base de datos de producción (SaaS multi-tenant), necesitamos implementar Firebase/Supabase.</p>
-            <button onClick={() => handleNavClick('landing')} className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-              Volver al inicio
-            </button>
+          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-200">
+            {authError && (
+              <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-4">
+                <p className="text-sm text-red-700">{authError}</p>
+              </div>
+            )}
+            <form onSubmit={handleRegister} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Nombre de tu Taller</label>
+                <div className="mt-1">
+                  <input type="text" required value={tallerNameInput} onChange={e => setTallerNameInput(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm" placeholder="Ej: FixIt Express" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+                <div className="mt-1">
+                  <input type="email" required value={emailInput} onChange={e => setEmailInput(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm" placeholder="tu@correo.com" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Contraseña</label>
+                <div className="mt-1">
+                  <input type="password" required minLength={6} value={passwordInput} onChange={e => setPasswordInput(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm" placeholder="••••••••" />
+                </div>
+              </div>
+              <button type="submit" disabled={authLoading} className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none disabled:opacity-50">
+                Registrarme Gratis
+              </button>
+            </form>
+            <div className="mt-6 text-center">
+              <button onClick={() => handleNavClick('landing')} className="text-sm text-brand-600 hover:text-brand-500 font-medium">Volver al inicio</button>
+            </div>
           </div>
         </div>
       </div>
@@ -243,14 +322,25 @@ function App() {
         </div>
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-200">
+            {authError && (
+              <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-4">
+                <p className="text-sm text-red-700">{authError}</p>
+              </div>
+            )}
             <form onSubmit={handleLogin} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Contraseña de Administrador</label>
+                <label className="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+                <div className="mt-1">
+                  <input type="email" required value={emailInput} onChange={e => setEmailInput(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm" placeholder="tu@correo.com" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Contraseña</label>
                 <div className="mt-1">
                   <input type="password" required value={passwordInput} onChange={e => setPasswordInput(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm" placeholder="••••••••" />
                 </div>
               </div>
-              <button type="submit" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none">
+              <button type="submit" disabled={authLoading} className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none disabled:opacity-50">
                 Ingresar al Sistema
               </button>
             </form>
