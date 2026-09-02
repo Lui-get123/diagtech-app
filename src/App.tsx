@@ -10,6 +10,7 @@ import { ClientesView } from './views/ClientesView';
 import { TecnicosView } from './views/TecnicosView';
 import { InventarioView } from './views/InventarioView';
 import { TrackingView } from './views/TrackingView';
+import { LandingView } from './views/LandingView';
 
 // Datos Iniciales (Limpios para producción/pruebas reales)
 const initialTickets: Ticket[] = [];
@@ -25,24 +26,26 @@ function App() {
 
   const getInitialView = () => {
     const v = urlParams.get('view');
-    if (!v) return 'tracking'; // La raíz SIEMPRE es el portal de clientes
+    if (!v) return 'landing'; // Ahora la raíz es la Landing Page
     
+    if (v === 'landing') return 'landing';
     if (v === 'tracking') return 'tracking';
+    if (v === 'register') return 'register';
     
-    // URL Secreta para el administrador
-    if (v === 'diagtech-admin') {
+    // Login
+    if (v === 'login' || v === 'diagtech-admin') {
       return isAuthenticated ? 'dashboard' : 'login';
     }
     
     // Rutas internas del panel
     if (['dashboard', 'equipos', 'clientes', 'tecnicos', 'inventario'].includes(v)) {
-      return isAuthenticated ? (v as any) : 'tracking';
+      return isAuthenticated ? (v as any) : 'login';
     }
     
-    return 'tracking'; // Fallback absoluto
+    return 'landing'; // Fallback
   };
 
-  const [view, setView] = useState<'dashboard' | 'equipos' | 'clientes' | 'tecnicos' | 'inventario' | 'tracking' | 'login'>(getInitialView());
+  const [view, setView] = useState<'dashboard' | 'equipos' | 'clientes' | 'tecnicos' | 'inventario' | 'tracking' | 'login' | 'landing' | 'register'>(getInitialView());
   
   const [tickets, setTickets] = useState<Ticket[]>(() => {
     const saved = localStorage.getItem('diagtech_tickets');
@@ -155,10 +158,44 @@ function App() {
     tracking: 'Portal de Seguimiento'
   };
 
+  // Si es la página de marketing inicial
+  if (view === 'landing') {
+    return <LandingView onNavigate={handleNavClick} />;
+  }
+
+  // Vista rápida para cuando quieran registrarse
+  if (view === 'register') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+          <div className="mx-auto w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mb-4">
+            <Cpu className="w-8 h-8 text-brand-600" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Crea tu cuenta en DiagTech</h2>
+          <p className="mt-2 text-sm text-gray-600">Únete a cientos de talleres organizados</p>
+        </div>
+        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-200 text-center">
+            <p className="text-gray-600 mb-6">Para continuar y conectar el sistema a la base de datos de producción (SaaS multi-tenant), necesitamos implementar Firebase/Supabase.</p>
+            <button onClick={() => handleNavClick('landing')} className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+              Volver al inicio
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Render especial sin barra lateral para simular la web del cliente
   if (view === 'tracking') {
     return (
       <div className="relative h-screen w-full">
+        <button 
+          onClick={() => handleNavClick('landing')} 
+          className="absolute top-4 left-4 z-50 bg-white/80 hover:bg-white text-gray-700 px-4 py-2 rounded-lg font-medium shadow-sm flex items-center backdrop-blur border border-gray-200 text-sm"
+        >
+          ← Volver a DiagTech
+        </button>
         <TrackingView tickets={tickets} />
       </div>
     );
@@ -173,7 +210,7 @@ function App() {
             <Lock className="w-8 h-8 text-brand-600" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Acceso Restringido</h2>
-          <p className="mt-2 text-sm text-gray-600">Solo personal autorizado de DiagTech</p>
+          <p className="mt-2 text-sm text-gray-600">Inicia sesión para gestionar tu taller</p>
         </div>
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-200">
@@ -188,6 +225,9 @@ function App() {
                 Ingresar al Sistema
               </button>
             </form>
+            <div className="mt-6 text-center">
+              <button onClick={() => handleNavClick('landing')} className="text-sm text-brand-600 hover:text-brand-500 font-medium">Volver a la página principal</button>
+            </div>
           </div>
         </div>
       </div>
