@@ -177,7 +177,7 @@ export function InventarioView({ inventario, onAddRepuesto, onAddRepuestosBulk }
             <button onClick={() => {setIsMapping(false); setRawCsvData([]);}} className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar Importación</button>
             <button onClick={handleConfirmImport} className="px-4 py-2 text-sm text-white bg-brand-600 rounded-lg hover:bg-brand-700 flex items-center">
               <Upload className="w-4 h-4 mr-2" />
-              Confirmar y Subir a Supabase
+              Confirmar y subir a la base de datos
             </button>
           </div>
         </div>
