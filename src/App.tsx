@@ -115,13 +115,7 @@ function App() {
   // Render especial sin barra lateral para simular la web del cliente
   if (view === 'tracking') {
     return (
-      <div className="relative">
-        <button 
-          onClick={() => setView('dashboard')} 
-          className="absolute top-4 left-4 z-50 bg-gray-900/80 hover:bg-gray-900 text-white px-4 py-2 rounded-lg font-medium shadow-lg flex items-center backdrop-blur"
-        >
-          ← Volver a DiagTech Admin
-        </button>
+      <div className="relative h-screen w-full">
         <TrackingView tickets={tickets} />
       </div>
     );
