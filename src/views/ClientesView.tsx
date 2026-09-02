@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import type { Cliente, Ticket } from '../types';
-import { PlusCircle, Search, MessageCircle } from 'lucide-react';
+import { PlusCircle, Search, Trash2, MessageCircle } from 'lucide-react';
 
 interface Props {
   clientes: Cliente[];
@@ -9,9 +9,10 @@ interface Props {
   searchTerm: string;
   setSearchTerm: (s: string) => void;
   highlightedCliente: string | null;
+  onDeleteCliente?: (id: string) => void;
 }
 
-export function ClientesView({ clientes, tickets, onAddCliente, searchTerm, setSearchTerm, highlightedCliente }: Props) {
+export function ClientesView({ clientes, tickets, onAddCliente, searchTerm, setSearchTerm, highlightedCliente, onDeleteCliente }: Props) {
   const [isAdding, setIsAdding] = useState(false);
   
   // Form states
@@ -118,6 +119,7 @@ export function ClientesView({ clientes, tickets, onAddCliente, searchTerm, setS
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Documento</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Contacto (WhatsApp)</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Tipo</th>
+              <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
@@ -149,11 +151,16 @@ export function ClientesView({ clientes, tickets, onAddCliente, searchTerm, setS
                     {c.tipo}
                   </span>
                 </td>
+                <td className="px-6 py-4 text-sm text-right">
+                  <button onClick={() => onDeleteCliente?.(c.id)} className="text-red-600 hover:text-red-900 p-1 rounded-md hover:bg-red-50" title="Eliminar Cliente">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </td>
               </tr>
             ))}
             {filteredClientes.length === 0 && (
               <tr>
-                <td colSpan={4} className="p-8 text-center text-gray-500">
+                <td colSpan={5} className="p-8 text-center text-gray-500">
                   No se encontró ningún cliente con esos datos.
                 </td>
               </tr>

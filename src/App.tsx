@@ -340,6 +340,32 @@ function App() {
     loadData(tallerId);
   };
 
+  // --- ELIMINAR Y EDITAR DATOS ---
+  
+  const handleDeleteCliente = async (id: string) => {
+    if (!confirm('¿Seguro que deseas eliminar este cliente? Se borrarán sus datos permanentemente.')) return;
+    await supabase.from('clientes').delete().eq('id', id).eq('taller_id', tallerId!);
+    loadData(tallerId!);
+  };
+
+  const handleDeleteTecnico = async (id: string) => {
+    if (!confirm('¿Seguro que deseas eliminar a este técnico?')) return;
+    await supabase.from('tecnicos').delete().eq('id', id).eq('taller_id', tallerId!);
+    loadData(tallerId!);
+  };
+
+  const handleDeleteRepuesto = async (id: string) => {
+    if (!confirm('¿Seguro que deseas eliminar este repuesto del inventario?')) return;
+    await supabase.from('repuestos').delete().eq('id', id).eq('taller_id', tallerId!);
+    loadData(tallerId!);
+  };
+
+  const handleDeleteTicket = async (codigo: string) => {
+    if (!confirm('¿Seguro que deseas eliminar este ticket? Esta acción no se puede deshacer.')) return;
+    await supabase.from('tickets').delete().eq('codigo', codigo).eq('taller_id', tallerId!);
+    loadData(tallerId!);
+  };
+
   // Titulo dinamico del Header
   const headerTitles = {
     dashboard: 'Resumen de Operaciones',
@@ -543,7 +569,7 @@ function App() {
         {/* Dynamic Content View */}
         <div key={view} className="flex-1 overflow-y-auto animate-fade-in flex flex-col">
           {view === 'dashboard' && <DashboardView tickets={tickets} inventario={inventario} onUpdateStatus={handleUpdateStatus} onClientClick={handleGoToCliente} />}
-          {view === 'equipos' && <EquiposView tickets={tickets} />}
+          {view === 'equipos' && <EquiposView tickets={tickets} onDeleteTicket={handleDeleteTicket} />}
           {view === 'clientes' && (
             <ClientesView 
               clientes={clientes} 
@@ -552,10 +578,11 @@ function App() {
               searchTerm={clienteSearchTerm}
               setSearchTerm={setClienteSearchTerm}
               highlightedCliente={highlightedCliente}
+              onDeleteCliente={handleDeleteCliente}
             />
           )}
-          {view === 'tecnicos' && <TecnicosView tecnicos={tecnicos} onAddTecnico={handleAddTecnico} />}
-          {view === 'inventario' && <InventarioView inventario={inventario} onAddRepuesto={handleAddRepuesto} onAddRepuestosBulk={handleAddRepuestosBulk} />}
+          {view === 'tecnicos' && <TecnicosView tecnicos={tecnicos} onAddTecnico={handleAddTecnico} onDeleteTecnico={handleDeleteTecnico} />}
+          {view === 'inventario' && <InventarioView inventario={inventario} onAddRepuesto={handleAddRepuesto} onAddRepuestosBulk={handleAddRepuestosBulk} onDeleteRepuesto={handleDeleteRepuesto} />}
         </div>
       </main>
 

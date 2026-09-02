@@ -1,14 +1,15 @@
 import { useState, useRef } from 'react';
 import type { Repuesto } from '../types';
-import { PlusCircle, PackageSearch, AlertTriangle, Upload } from 'lucide-react';
+import { PlusCircle, PackageSearch, AlertTriangle, Upload, Trash2 } from 'lucide-react';
 
 interface Props {
   inventario: Repuesto[];
   onAddRepuesto: (r: Repuesto) => void;
   onAddRepuestosBulk: (r: Repuesto[]) => void;
+  onDeleteRepuesto?: (id: string) => void;
 }
 
-export function InventarioView({ inventario, onAddRepuesto, onAddRepuestosBulk }: Props) {
+export function InventarioView({ inventario, onAddRepuesto, onAddRepuestosBulk, onDeleteRepuesto }: Props) {
   const [isAdding, setIsAdding] = useState(false);
   const [nombre, setNombre] = useState('');
   const [categoria, setCategoria] = useState('Pantallas');
@@ -196,6 +197,7 @@ export function InventarioView({ inventario, onAddRepuesto, onAddRepuestosBulk }
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Categoría</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Stock</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Precio</th>
+              <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
@@ -207,9 +209,14 @@ export function InventarioView({ inventario, onAddRepuesto, onAddRepuestosBulk }
                   {r.stock <= 2 ? <span className="text-red-600 flex items-center gap-1"><AlertTriangle className="w-4 h-4"/> {r.stock} (Bajo)</span> : <span className="text-green-600">{r.stock}</span>}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">${r.precioVenta.toLocaleString()}</td>
+                <td className="px-6 py-4 text-sm text-right">
+                  <button onClick={() => onDeleteRepuesto?.(r.id)} className="text-red-600 hover:text-red-900 p-1 rounded-md hover:bg-red-50" title="Eliminar Repuesto">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </td>
               </tr>
             ))}
-            {filtered.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-gray-500">No hay repuestos registrados</td></tr>}
+            {filtered.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-gray-500">No hay repuestos registrados</td></tr>}
           </tbody>
         </table>
       </div>

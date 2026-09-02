@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import type { Tecnico } from '../types';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Trash2 } from 'lucide-react';
 
 interface Props {
   tecnicos: Tecnico[];
   onAddTecnico: (t: Tecnico) => void;
+  onDeleteTecnico?: (id: string) => void;
 }
 
-export function TecnicosView({ tecnicos, onAddTecnico }: Props) {
+export function TecnicosView({ tecnicos, onAddTecnico, onDeleteTecnico }: Props) {
   const [isAdding, setIsAdding] = useState(false);
   const [nombre, setNombre] = useState('');
   const [documento, setDocumento] = useState('');
@@ -62,12 +63,19 @@ export function TecnicosView({ tecnicos, onAddTecnico }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {tecnicos.map(t => (
-          <div key={t.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col">
+          <div key={t.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col relative">
+            <button 
+              onClick={() => onDeleteTecnico?.(t.id)} 
+              className="absolute top-4 right-4 text-gray-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
+              title="Eliminar Técnico"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
             <div className="flex items-center mb-4">
               <img className="h-12 w-12 rounded-full mr-4" src={`https://ui-avatars.com/api/?name=${encodeURIComponent(t.nombre)}&background=e5e7eb&color=374151`} alt="" />
               <div>
-                <h3 className="font-semibold text-gray-900">{t.nombre}</h3>
-                <span className="text-xs text-brand-600 bg-brand-50 px-2 py-1 rounded-full font-medium">{t.especialidad}</span>
+                <h3 className="font-semibold text-gray-900 pr-8">{t.nombre}</h3>
+                <span className="text-xs text-brand-600 bg-brand-50 px-2 py-1 rounded-full font-medium mt-1 inline-block">{t.especialidad}</span>
               </div>
             </div>
             <div className="text-sm text-gray-500 space-y-1">

@@ -1,11 +1,12 @@
 import type { Ticket } from '../types';
-import { MonitorSmartphone, Calendar, User, FileText, Wrench } from 'lucide-react';
+import { MonitorSmartphone, Calendar, User, FileText, Wrench, Trash2 } from 'lucide-react';
 
 interface Props {
   tickets: Ticket[];
+  onDeleteTicket?: (id: string) => void;
 }
 
-export function EquiposView({ tickets }: Props) {
+export function EquiposView({ tickets, onDeleteTicket }: Props) {
   return (
     <div className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">
       <div className="mb-6">
@@ -16,19 +17,28 @@ export function EquiposView({ tickets }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {tickets.map(t => (
           <div key={t.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-            <div className="p-5 border-b border-gray-100 flex justify-between items-start bg-gray-50/50">
+            <div className="p-5 border-b border-gray-100 flex justify-between items-start bg-gray-50/50 relative">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-brand-100 rounded-lg text-brand-600">
                   <MonitorSmartphone className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900">{t.equipo.modelo}</h3>
-                  <p className="text-xs text-gray-500">{t.equipo.tipo}</p>
+                  <h3 className="font-bold text-gray-900 pr-8">{t.equipo.modelo}</h3>
+                  <p className="text-xs text-gray-500 font-mono mt-0.5">{t.id}</p>
                 </div>
               </div>
-              <span className="text-xs font-mono font-bold bg-gray-200 text-gray-700 px-2 py-1 rounded">
-                {t.id}
-              </span>
+              <div className="flex flex-col items-end gap-2">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                  {t.estado}
+                </span>
+                <button 
+                  onClick={() => onDeleteTicket?.(t.id)} 
+                  className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-md transition-colors"
+                  title="Eliminar Ticket"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <div className="p-5 flex-1 space-y-4">
